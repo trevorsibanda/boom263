@@ -61,7 +61,7 @@ function OrderSuccess(props) {
               <div className="pricing-table">
                 <ul className="list-unstyled">
                         <li>
-                            <img src="/assets/img/cards.png" style={{width: "100%"}} />
+                            <img src="/assets/img/cards.png" alt="card type" style={{width: "100%"}} />
                         </li>
                 </ul>
                 <h4>Recharge PIN</h4>
@@ -87,7 +87,7 @@ function OrderSuccess(props) {
                 <li><i className="vi bi-chevron-right"></i>Buyer account: <b>{order.cr}</b></li>
                 <li><i className="vi bi-chevron-right"></i>Amount Paid: <b>USD${order.price}</b></li>
                 <li><i className="vi bi-chevron-right"></i>Time Paid: <b>{order.paidAt}</b></li>
-                <li>Need help? <a href="">Talk to our customer support on Whatsapp</a></li>
+                <li>Need help? <a href="/support">Talk to our customer support on Whatsapp</a></li>
               </ul>
 
             </div>
@@ -111,7 +111,8 @@ function OrderPending(props) {
     let [paid, setPaid] = useState(false)
     let [working, setWorking] = useState(false)
 
-    useEffect(() => {
+  useEffect(() => {
+        setEmail("")
         let params = config.urlParams()
         if (params && params.code && !working) {
             setCode(params.code)
@@ -143,7 +144,7 @@ function OrderPending(props) {
         
         }
 
-    }, [setCode, setDisabled, setWorking, code, order._id, setInputDisabled])
+    }, [setCode, setDisabled, setWorking, email, working, setEmail, code, order._id, setInputDisabled])
 
     let verifyAndPay = () => {
 

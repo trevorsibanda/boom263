@@ -14,7 +14,7 @@ export default function Navbar(props) {
       <nav id="navbar" className="navbar">
         <ul>
           <li><Link className="nav-link scrollto active" to="/">Home</Link></li>
-          <li className="dropdown"><a href="#"><span>Buy Airtime</span> <i className="bi bi-chevron-down"></i></a>
+          <li className="dropdown"><a href="/"><span>Buy Airtime</span> <i className="bi bi-chevron-down"></i></a>
             <ul>
               { config.packages.map( pkg => 
                 <li><Link to={"/buy/"+ pkg.id}>{pkg.name}</Link></li>  

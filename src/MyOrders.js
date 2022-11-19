@@ -9,6 +9,9 @@ export default function MyOrders(props) {
   let [loading, setLoading] = useState(false)
   let [orders, setOrders] = useState([])
 
+  setLoading(false)
+  setOrders([])
+
     return loading ? <Loader text="Loading your orders" /> : (
           <main id="main">
 
@@ -27,10 +30,11 @@ export default function MyOrders(props) {
               <ul className="list-unstyled">
                 <li><i className="vi bi-chevron-right"></i><Link to="/"  > Bought Econet 1USD , 3 days ago</Link></li>
                 <li><i className="vi bi-chevron-right"></i><Link to="/" className="text-danger" >FAILED: Econet 1USD , 3 days ago</Link></li>
-                <li><i className="vi bi-chevron-right"></i>Retina Ready</li>
-                <li><i className="vi bi-chevron-right"></i>Easy to Use</li>
-                <li><i className="vi bi-chevron-right"></i>Unlimited Features</li>
-                <li><i className="vi bi-chevron-right"></i>Unlimited Features</li>
+                    {orders.forEach(order => 
+                      <li><i className="vi bi-chevron-right"></i>Retina Ready {order}</li>
+                )}
+                    
+                
               </ul>
 
             </div>
