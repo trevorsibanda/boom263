@@ -1,0 +1,17 @@
+{
+    "_id": "12345678901234567890123456789012",
+    "package_": "econet_usd1",
+    "name": "Econet USD $1",
+    "amount": 1.00,
+    "price": 1.10,
+    "cr": "CR675656",
+    "token": {
+        "code": "1234567890123456",
+        "pretty": "1234 5678 9012 12345",
+        "ussd": "*121*1234567890123#",
+        "image": "blob"
+    },
+    "email": "",
+    "paidAt": "Mon Nov 7 12:01:24 CAT 2022",
+    "status": "complete"
+}

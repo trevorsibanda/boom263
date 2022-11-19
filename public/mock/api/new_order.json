@@ -1,0 +1,9 @@
+{
+    "_id": "12345678901234567890123456789012",
+    "package_": "econet_usd1",
+    "name": "Econet USD $1",
+    "cr": "CR757656",
+    "amount": 1.00,
+    "price": 1.10,
+    "status": "pending"
+}
