@@ -26,9 +26,9 @@ class Footer extends Component {
 
                                 <ul className="list-unstyled">
                                     <li><Link to="/about">About us</Link></li>
-                                    <li><a href="#">DerivP2P Account</a></li>
-                                    <li><a href="#">Talk to us on Whatsapp</a></li>
-                                    <li><a href="#">Deriv Terms and Conditions</a></li>
+                                    <li><a href="/#">DerivP2P Account</a></li>
+                                    <li><a href="/whatsapp">Talk to us on Whatsapp</a></li>
+                                    <li><a href="/tnc">Deriv Terms and Conditions</a></li>
                                 </ul>
 
                             </div>

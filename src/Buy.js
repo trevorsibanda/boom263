@@ -1,6 +1,5 @@
 import { Component } from "react";
-import {Navigate, useParams} from "react-router-dom"
-import { Link} from "react-router-dom";
+import {Navigate} from "react-router-dom"
 import config from "./config";
 import Loader from "./Loader";
 import withRouter from "./withRouter";

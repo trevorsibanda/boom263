@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import './index.css';
@@ -10,11 +10,9 @@ import Packages from './Packages';
 import Navbar from './Navbar';
 import Footer from './Footer';
 import Buy from './Buy';
-import AccountPicker from './MyOrders';
 import MyOrders from './MyOrders';
 import Order from './Order';
 import About from './About';
-import ScrollToTop from './ScrollToTop';
 import Login from './Login';
 
 
