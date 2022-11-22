@@ -14,6 +14,7 @@ import MyOrders from './MyOrders';
 import Order from './Order';
 import About from './About';
 import Login from './Login';
+import Admin from './Admin';
 
 
 function Boom263(){
@@ -23,6 +24,8 @@ function Boom263(){
           <Navbar />
           <Routes>
             <Route path="/" element={<App />} />
+          <Route path="/admin" element={<Admin />} />
+          <Route path="/users" element={<Admin />} />
             <Route path="/about" element={<About />} />
             <Route path="/packages" element={<Packages />} />
             <Route path="/login" element={<Login />} />
