@@ -1,25 +1,34 @@
-import { Component} from "react"
+import { Component, useEffect, useState} from "react"
 import { Navigate } from "react-router"
 import config from "./config"
 
 
 
-export default class Login extends Component {
+export default function Login() {
 
-  constructor(props) {
-    super(props)
+  let [loggedIn, setLoggedIn] = useState(false)
+  let [working, setWorking] = useState(true)
 
-    this.state = {
-      checked: false,
+
+  useEffect(() => {
+    let params = config.urlParams()
+    if (params && params.acct1 && params.token1 && params.cur1) {
+      config.storeDerivToken(params.cur1, params.acct1, params.token1)
     }
+    let token = config.derivAuthToken()
+    if (token && token.token) {
+      //todo: connect and authenticate using deriv api
+      setLoggedIn(true)
+    } else {
+      setTimeout(_ => {
+        setLoggedIn(false)
+        setWorking(false)
+      }, 1000)
+    }
+  }, [setLoggedIn, setWorking])
 
-  }
-
-
-  
-
-  redir() {
-    if (!config.checkLoggedIn()) {
+  let redir = ()=> {
+    if (!loggedIn) {
       window.location.href = config.derivLoginURL()
       return <></>
     }
@@ -28,9 +37,7 @@ export default class Login extends Component {
     
   }
 
-  render() {
-
-    return (config.checkLoggedIn() || this.state.checked) ? this.redir() : (
+  return (loggedIn || !working) ? redir() : (
       <main id="main" style={{ marginTop: "100px" }}>
 
         <section id="about-us" className="about-us padd-section">
@@ -50,4 +57,3 @@ export default class Login extends Component {
       </main>
     )
   }
-}
