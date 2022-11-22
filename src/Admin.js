@@ -91,21 +91,15 @@ function ListOrders(props) {
 
 function ListStock(props) {
 
-    let [orders, setOrders] = useState([])
+    let [orders, setStock] = useState([])
     let [filter, setFilter] = useState("recent")
     let apiKey = props.api_key
-
-    let loadSpecificOrder = () => {
-        let id = prompt("Please enter the order id here")
-
-        alert("Loading orders for " + id)
-    }
 
     let applyOrdersFilter = (filter) => {
         setFilter(filter)
 
         config.admin.filterOrders(apiKey, filter).then(orders => {
-            setOrders(orders)
+            setStock(orders)
         }).catch(err => {
             alert('Filter orders', 'Failed to filter orders, see log for error', 'error')
             console.log(err)
@@ -123,9 +117,6 @@ function ListStock(props) {
                                 <h4>Manage Stock</h4>
                                 <div className="table_btn">
                                     <button onClick={addNewStock} disabled={false} className="btn btn-success"><i className="bi bi-cart"></i> Add new stock</button>
-                                </div>
-                                <div className="table_btn">
-                                    <button onClick={loadSpecificOrder} disabled={false} className="btn btn-warning"><i className="bi bi-eye"></i> Load specific order</button>
                                 </div>
                                 <div>
                                     <div className="form-control">
@@ -202,13 +193,19 @@ export default function Admin(props) {
                         <p className="separator">Manage orders and add new stock here.
                         </p>
                         <div className="table_btn">
+                            <label>API Key</label>
+                            <input type="password" className="form-control" value={apiKey} placeholder="Insert API Key here. Necessary to perform admin functions" onChange={evt => { setApiKey(evt.target.value); config.admin.setApiKey(evt.target.value) } } />
+                        </div>
+                        <div className="table_btn">
                             <button disabled={false} onClick={stockReport} className="btn btn-primary"><i className="bi bi-list"></i> Get stock report</button>
                         </div>
                         <div className="table_btn">
                             <button disabled={false} onClick={ordersReport} className="btn btn-info"><i className="bi bi-cart"></i> Get orders report</button>
                         </div>
+                        
                     </div>
-                    <ListOrders api_key={apiKey} />
+                    <ListStock />
+                    <ListOrders />
                 </div>
 
             </section>

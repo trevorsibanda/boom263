@@ -160,6 +160,9 @@ const config = {
         stockReport,
         ordersReport,
         refundOrder,
+        setApiKey: (key) => {
+            reactLocalStorage.set('api_key', key)
+        },
     },
     pkg_price: calculate_price,
     pastOrders,
