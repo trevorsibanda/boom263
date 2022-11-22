@@ -2,7 +2,7 @@
 import {reactLocalStorage} from 'reactjs-localstorage';
  
 
-const devMode = true
+const devMode = false
 
 //available packages for sale
 const packages = [
@@ -77,13 +77,9 @@ function storeDerivToken(currency, cr, token) {
 //Send an http request to the server containing the verification code
 //retrieved by the user from the Deriv OTP email and an optional
 //email address to receive their airtime recharge pin.
-function verifyAndPay(id, code, email) {
-    let uri =  devMode ? "verify_order.json" : 'verify_order/' + id + '/' + code + '/' + email
-    return fetch(api_url(uri)).then(response => {
-        saveCurrentOrder({})
-        return response.json()
-    })
-} 
+function verifyAndPay(_id, code, email) {
+    return api_post("verify_order", {_id, code, email})
+}
 
 //Checks if server can use given token
 function checkDerivToken() {
@@ -91,22 +87,29 @@ function checkDerivToken() {
 }
 
 function api_url(uri) {
-    return (devMode ? "/mock" : "") + '/api/'+uri
+    return (devMode ? "http://localhost:9000/" : "" ) + ".netlify/functions/" + uri
 }
 
 function fetchOrder(_id) {
-   let uri =  devMode ? "fetch_order.json" : 'fetch_order/' + _id
-    return fetch(api_url(uri)).then(response => {
-        return response.json()
-    }) 
+    return api_post("fetch_order", {_id})
 }
 
-function createNewOrder(packge, quantity) {
-    let uri =  devMode ? "new_order.json" : 'new_order/' + packge + '/' + quantity
-    return fetch(api_url(uri)).then(response => {
-        saveCurrentOrder({})
+function api_post(uri, data) {
+    let deriv = derivAuthToken()
+    return fetch(api_url(uri), {
+        method: 'POST', // or 'PUT'
+        headers: {
+            'Content-Type': 'application/json',
+            'X-Api-Key': reactLocalStorage.get('api_key', '')
+        },
+        body: JSON.stringify({ ...data, deriv}),
+        }).then(response => {
         return response.json()
     })
+}
+
+function createNewOrder(package_, quantity) {
+    return api_post("new_order", {package_, quantity})
 }
 
 function derivLoginURL() {
@@ -129,32 +132,24 @@ function urlParams() {
    return Object.fromEntries(window.location.search.slice(1).split('&').map(entry => entry.split('=') ))
 }
 
-function filterOrders(api_key, filter) {
-    return fetch(api_url('/admin/orders/' + filter), {
-        headers: [{
-            'X-Api-Key': api_key,
-        }]
-    }).then(resp => resp.json())
+function filterOrders(filter) {
+    return api_post("admin_orders", {filter})
 }
 
-function adminReport(api_key, report) {
-    return fetch(api_url('/admin/report/' + report), {
-        headers: [{
-            'X-Api-Key': api_key,
-        }]
-    }).then(resp => resp.json())
+function adminReport(report) {
+    return api_post("admin_report", {report})
 }
 
-function stockReport(api_key) {
-    return adminReport(api_key, "stock")
+function stockReport() {
+    return adminReport("stock")
 }
 
 
-function ordersReport(api_key) {
-    return adminReport(api_key, "orders")
+function ordersReport() {
+    return adminReport("orders")
 }
 
-function refundOrder(api_key, order) {
+function refundOrder(order) {
     alert("Refund orders not yet implemented")
 }
 
