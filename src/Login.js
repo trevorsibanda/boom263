@@ -1,4 +1,4 @@
-import { Component, useEffect, useState} from "react"
+import { useEffect, useState} from "react"
 import { Navigate } from "react-router"
 import config from "./config"
 
