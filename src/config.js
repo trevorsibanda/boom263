@@ -7,6 +7,14 @@ const devMode = true
 //available packages for sale
 const packages = [
     {
+        id: "netone_mogigs",
+        name: 'Netone MoGigs US$10.00',
+        provider: "Netone",
+        amount: 10, features: [
+        <>Netone <b>15Gig Mo Gigs</b></>,
+        <>Instant Recharge</>,
+    ]},
+    {
         id: "econet_1usd",
         name: 'Econet US$1.00',
         provider: "Econet",
@@ -121,9 +129,43 @@ function urlParams() {
    return Object.fromEntries(window.location.search.slice(1).split('&').map(entry => entry.split('=') ))
 }
 
+function filterOrders(api_key, filter) {
+    return fetch(api_url('/admin/orders/' + filter), {
+        headers: [{
+            'X-Api-Key': api_key,
+        }]
+    }).then(resp => resp.json())
+}
+
+function adminReport(api_key, report) {
+    return fetch(api_url('/admin/report/' + report), {
+        headers: [{
+            'X-Api-Key': api_key,
+        }]
+    }).then(resp => resp.json())
+}
+
+function stockReport(api_key) {
+    return adminReport(api_key, "stock")
+}
+
+
+function ordersReport(api_key) {
+    return adminReport(api_key, "orders")
+}
+
+function refundOrder(api_key, order) {
+    alert("Refund orders not yet implemented")
+}
 
 const config = {
     packages,
+    admin: {
+        filterOrders,
+        stockReport,
+        ordersReport,
+        refundOrder,
+    },
     pkg_price: calculate_price,
     pastOrders,
     fetchOrder,
