@@ -60,6 +60,11 @@ function currentOrder(checkUrl = false) {
     return reactLocalStorage.getObject('active_order', null)
 }
 
+function getPackage(package_) {
+    let order = packages.filter(pkg => pkg.id === package_)
+    return order
+}
+
 function saveCurrentOrder(order) {
     reactLocalStorage.setObject('active_order', order)
 }
@@ -174,6 +179,7 @@ const config = {
     verifyAndPay,
     derivAuthToken,
     derivLoginURL,
+    getPackage,
     checkDerivToken,
     storeDerivToken,
     setPostLogin,
