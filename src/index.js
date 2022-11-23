@@ -32,7 +32,7 @@ function Boom263(){
             <Route path="/buy/:package_" element={<Buy />} />
             <Route path="/orders" element={<MyOrders />} />
             <Route path="/order/verify" element={<Order />} />
-            
+            <Route path="/order/:id/:package_" element={<Order />} />
             <Route path="/order/:id" element={<Order />} />
             
             <Route path="*" element={<Page404 />}/>

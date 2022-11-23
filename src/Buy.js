@@ -94,7 +94,7 @@ class Buy extends Component {
         )
     
         if (this.state.redirectToOrder) {
-            component = < Navigate to={'/order/new'} />
+            component = < Navigate to={'/order/new/' + this.state.package_id} />
         }
     
         if (this.state.redirectToLogin) {

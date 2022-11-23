@@ -6,7 +6,7 @@ import withRouter from "./withRouter"
 
 
 function OrderFailure(props) {
-    let {order} = props
+    let {order} = props.order
     return (
           <main id="main">
 
@@ -17,17 +17,17 @@ function OrderFailure(props) {
           <div className="col-md-7 col-lg-5">
             <div className="about-content" data-aos="fade-left" data-aos-delay="100">
 
-              <h2><span>{props.reason ? props.reason : "An error occured"}</span> </h2>
+              <h2 className="text-danger"><span>{props.reason ? props.reason : "An error occured"}</span> </h2>
               <h4><span>Hi Ezra,</span> </h4>
                                 <p>The action failed with error: 
                                     
               </p>
 
               <ul className="list-unstyled">
-                <li><i className="vi bi-chevron-right"></i><b>OrderID</b> {order.id}</li>
-                <li><i className="vi bi-chevron-right"></i><b>Package</b> {order.package_}</li>
-                <li><i className="vi bi-chevron-right"></i><b>Amount</b> {order.amount}</li>
                 <li><i className="vi bi-chevron-right"></i><b>REASON FAILED</b>: <pre>{JSON.stringify(props.error)}</pre></li>
+                <li><i className="vi bi-chevron-right"></i><b>OrderID</b> {order && order.id ? order.id : "NIL"}</li>
+                <li><i className="vi bi-chevron-right"></i><b>Package</b> {order && order.package_ ? order.package_ : "NIL"}</li>
+                <li><i className="vi bi-chevron-right"></i><b>Amount</b> {order && order.amount ? order.amount  : "???"}</li>
               </ul>
 
             </div>
@@ -227,9 +227,14 @@ class NewOrder extends Component{
     constructor(props) {
         super(props)
 
+      let pkg = props.package_
+      let order = config.getPackage(pkg)
+      if (pkg && !order) {
+        order = config.currentOrder(true)
+      }
         
         this.state = {
-            working: true, success: false, order: config.currentOrder(), error: ''
+            working: true, success: false, order: order, error: ''
         }
         
 
@@ -240,7 +245,8 @@ class NewOrder extends Component{
 
     componentDidMount() {
         let order = config.currentOrder()
-        if (order && order.package_) {
+      if (order && order.package_) {
+            order.package_.features = null
             config.createNewOrder(order.package_, 1).then(order => {
                 config.saveCurrentOrder(order)
                 this.setState({order, working: false, success: true, redirect: "/order/"+order._id})
@@ -301,7 +307,7 @@ function Order(props) {
         }
     }
 
-    return props.params.id === "new" ? <NewOrder /> : (loading ? <Loader text="Loading your order" /> : page)
+    return props.params.id === "new" ? <NewOrder package_={props.params.package_} /> : (loading ? <Loader text="Loading your order" /> : page)
 }
 
 export default withRouter(Order)
