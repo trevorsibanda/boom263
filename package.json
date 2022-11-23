@@ -11,6 +11,7 @@
     "@uppy/dashboard": "^3.2.0",
     "@uppy/react": "^3.0.2",
     "axios": "^0.19.2",
+    "faunadb": "^4.7.1",
     "fetch": "^1.1.0",
     "ra-data-json-server": "^4.5.2",
     "react": "^18.2.0",
