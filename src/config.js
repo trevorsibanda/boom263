@@ -82,8 +82,8 @@ function storeDerivToken(currency, cr, token) {
 //Send an http request to the server containing the verification code
 //retrieved by the user from the Deriv OTP email and an optional
 //email address to receive their airtime recharge pin.
-function verifyAndPay(_id, code, email) {
-    return api_post("verify_order", {_id, code, email})
+function verifyAndPay(_id, verification_code, email) {
+    return api_post("verify_order", {_id, verification_code, email})
 }
 
 //Checks if server can use given token
@@ -92,7 +92,7 @@ function checkDerivToken() {
 }
 
 function api_url(uri) {
-    return (devMode ? "http://localhost:9000/" : "" ) + ".netlify/functions/" + uri
+    return (devMode ? "http://localhost:9000/" : "" ) + ".netlify/functions/index/" + uri
 }
 
 function fetchOrder(_id) {

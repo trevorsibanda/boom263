@@ -275,12 +275,13 @@ function Order(props) {
     let [error, setError] = useState('')
 
     useEffect(() => {
-
-        
-        if (props.params.id !== "new") {
+        let url_params = config.urlParams()
+      
+        let _id = props.params.id && props.params.id ? props.params.id : (url_params && url_params.utm_content ? url_params.utm_content : "")
+        if (_id !== "new") {
+            console.log(props.params)
             
-
-            config.fetchOrder(props.params.id).then(order_ => {
+            config.fetchOrder(_id).then(order_ => {
                 setOrder(order_)
                 setLoading(false)
             }).catch(err => {
