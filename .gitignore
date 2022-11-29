@@ -1,4 +1,4 @@
 node_modules
-
+built-lambda
 # Local Netlify folder
 .netlify
