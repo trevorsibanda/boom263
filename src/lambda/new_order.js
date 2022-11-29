@@ -1,3 +1,6 @@
+import {createNewOrder } from "./config"
+const f = require('faunadb')
+
 let HEADERS = {
   'Access-Control-Allow-Headers': 'Origin, X-Requested-With, Content-Type, Accept, Access-Control-Allow-Origin',
   'Content-Type': 'application/json', //optional
@@ -10,6 +13,8 @@ let HEADERS = {
 HEADERS['Access-Control-Allow-Origin'] = '*'
 HEADERS['Vary'] = 'Origin'
 
+
+
 exports.handler = async function (event, context) {
   try {
     if (event.httpMethod === 'OPTIONS') {
@@ -17,18 +22,14 @@ exports.handler = async function (event, context) {
     }
     if (event.httpMethod === 'POST') {
         const body = JSON.parse(event.body)
-        //Your code goes here
-
-       return {
-         statusCode: 200,
-         body: 'Success',
-         HEADERS
-       } 
- 
+        
+        
+        
+         
     }
     return {
         statusCode: 200,
-        body: 'yay',
+        body: 'Only POST allowed',
       HEADERS
     }
   } catch (e) {
