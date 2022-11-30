@@ -295,7 +295,7 @@ function Order(props) {
 
         }
         
-    }, [props.params.id, setOrder, setLoading, setError])
+    }, [props.params, props.params.id, setOrder, setLoading, setError])
     
     let page = <></>
     if (order && props.params.id !== "new" && !loading) {
