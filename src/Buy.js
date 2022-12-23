@@ -49,6 +49,10 @@ class Buy extends Component {
     }
 
     onPayClick() {
+        alert({
+            title: "Deriv withdrawal request",
+            text: "Please enter the amount you want to withdraw",
+        })
         config.setPostLogin('/buy/' + this.state.package_id)
         config.saveCurrentOrder({
          package_: this.state.package_, status: 'not_created',
@@ -77,10 +81,14 @@ class Buy extends Component {
                                 <h2>USD ${this.state.package_.amount}</h2>
                                 <ul className="list-unstyled">
                                     <li>
-                                        <img src="/assets/img/cards.png" alt="recharge card" style={{ maxWidth: "200px" }} />
+                                        <img src={"/assets/img/"+ this.state.package_id + ".png"} alt="recharge card" style={{ maxWidth: "200px" }} />
                                     </li>
                                     <li>Save up to 15% compared to buying using DerivP2P</li>
                                     <li>Safe and secure payment</li>
+                                    <li><strong>IMPORTANT:</strong>
+                                        <span class="text-danger">By clicking Buy, we will send you a Deriv payment
+                                            agent withdrawal request to your account. When you click on the link sent to your email,
+                                            we will process your airtime payment.</span></li>
                                 </ul>
                                 <div className="table_btn">
                                     <button onClick={this.onPayClick} disabled={false} className="btn btn-success"><i className="bi bi-cart"></i> Pay USD${config.pkg_price(this.state.package_.amount)} with Deriv </button>
