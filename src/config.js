@@ -15,24 +15,6 @@ const packages = [
         <>Instant Recharge</>,
     ]},
     {
-        id: "econet_1usd",
-        name: 'Econet US$1.00',
-        provider: "Econet",
-        amount: 1.00,
-        features: [
-        <>Econet <b>USD Airtime</b></>,
-        <>Instant Recharge</>,
-    ]},
-    {
-        id: "econet_5usd",
-        name: 'Econet US$5.00',
-        provider: "Econet",
-        amount: 5.00,
-        features: [
-        <>Econet <b>USD Airtime</b></>,
-        <>Instant Recharge</>,
-    ]},
-    {
         id: "econet_10usd",
         name: 'Econet US$10.00',
         provider: "Econet",
