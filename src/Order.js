@@ -26,7 +26,7 @@ function OrderFailure(props) {
               <ul className="list-unstyled">
                 <li><i className="vi bi-chevron-right"></i><b>REASON FAILED</b>: <pre>{JSON.stringify(props.error)}</pre></li>
                 <li><i className="vi bi-chevron-right"></i><b>OrderID</b> {order && order.id ? order.id : "NIL"}</li>
-                <li><i className="vi bi-chevron-right"></i><b>Package</b> {order && order.package_ ? order.package_ : "NIL"}</li>
+                <li><i className="vi bi-chevron-right"></i><b>Package</b> {order && order.package_ ? order.package_.id : "NIL"}</li>
                 <li><i className="vi bi-chevron-right"></i><b>Amount</b> {order && order.amount ? order.amount  : "???"}</li>
               </ul>
 
@@ -41,7 +41,6 @@ function OrderFailure(props) {
 }
 
 function OrderSuccess(props) {
-    console.log(props.order)
     let { order } = props
     let {token} = order
     return (
@@ -85,7 +84,7 @@ function OrderSuccess(props) {
               <ul className="list-unstyled"> 
                 <li><i className="vi bi-chevron-right"></i>Order ID: <b>{order._id}</b></li>
                 <li><i className="vi bi-chevron-right"></i>Buyer account: <b>{order.purchaser.fullname}</b></li>
-                <li><i className="vi bi-chevron-right"></i>Amount Paid: <b>USD${order.price_paid}</b></li>
+                <li><i className="vi bi-chevron-right"></i>Amount Paid: <b>USD${order.amount_paid}</b></li>
                 <li><i className="vi bi-chevron-right"></i>Time Paid: <b>{order.paidAt ? order.paidAt["@ts"] : "recently"}</b></li>
                 <li>Need help? <a href="/support">Talk to our customer support on Whatsapp</a></li>
               </ul>
@@ -143,7 +142,13 @@ function OrderPending(props) {
 
 
         config.verifyAndPay(order._id, code, email).then(updatedOrder => {
-                
+          if (updatedOrder && updatedOrder.error) {
+            alert('Error', updatedOrder.error, 'warning')
+            setWorking(false)
+            setDisabled(false)
+            setInputDisabled(false)
+            return
+                }
                 setOrder(updatedOrder)
                 setWorking(false)
                 setDisabled(false)
@@ -230,6 +235,11 @@ class NewOrder extends Component{
       if (order && order.package_) {
             order.package_.features = null
             config.createNewOrder(order.package_, 1).then(order => {
+              if (order && order.error) {
+                this.setState({ working: false, error: order.error })
+                alert('Failed to create new order', order.error, 'warning')
+                return
+                }
                 config.saveCurrentOrder(order)
                 this.setState({order, working: false, success: true, redirect: "/order/"+order._id})
             }).catch(err => {
@@ -263,7 +273,14 @@ function Order(props) {
         if (_id !== "new") {
             console.log(props.params)
             
-            config.fetchOrder(_id).then(order_ => {
+          config.fetchOrder(_id).then(order_ => {
+            if (order_ && order_.error) {
+              alert('Error', 'Failed to load order with error: '+ JSON.stringify(order_.error), 'warning')
+              setError(order_.error)
+
+              setLoading(false)
+              return
+                }
                 setOrder(order_)
                 setLoading(false)
             }).catch(err => {
