@@ -217,6 +217,13 @@ router.post('/verify_order', (req, res) => withDerivAuth(req, res, (req, res, de
         })
       } else {
         return paymentAgentDoWithdraw(derivBasicAPI, order, req.body.verification_code, dry_run).then(resp => {
+          if (resp.error && resp.error.code) {
+            res.jsonp({
+              error: 'Failed to withdraw funds from your Deriv account: ' + resp.error.code,
+              reason: resp.error.message
+            })
+            return
+          }
           console.log("Withdrawal request for ", + order._id + " success")
           //get one stock item from list
           return popStock(order.package_.id).then(stock => {
