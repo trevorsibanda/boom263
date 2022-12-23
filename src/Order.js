@@ -17,7 +17,7 @@ function OrderFailure(props) {
           <div className="col-md-7 col-lg-5">
             <div className="about-content" data-aos="fade-left" data-aos-delay="100">
 
-              <h2 className="text-danger"><span>{props.error ? props.error.reason : "An error occured"}</span> </h2>
+              <h2 className="text-danger"><span>{props.error ? props.error.error : "An error occured"}</span> </h2>
               <h4><span>Hi {order && order.purchaser ? order.purchaser.fullname : "there"},</span> </h4>
                                 <p>The action failed with error: 
                                     
@@ -144,7 +144,7 @@ function OrderPending(props) {
 
         config.verifyAndPay(order._id, code, email).then(updatedOrder => {
           if (updatedOrder && updatedOrder.error) {
-            setError(updatedOrder.error)
+            setError(updatedOrder)
             setWorking(false)
             setDisabled(false)
             setInputDisabled(false)
