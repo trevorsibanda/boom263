@@ -27,6 +27,7 @@ class Buy extends Component {
             redirectToOrder: false,
             order: { id: 'new' },
             loading: true,
+            loadingMsg: "Loading package"
         }
 
 
@@ -49,16 +50,22 @@ class Buy extends Component {
     }
 
     onPayClick() {
-        alert({
-            title: "Deriv withdrawal request",
-            text: "Please enter the amount you want to withdraw",
-        })
+        this.setState({loading: true, loadingMsg: "Creating order for " + this.state.package_.name})
         config.setPostLogin('/buy/' + this.state.package_id)
         config.saveCurrentOrder({
          package_: this.state.package_, status: 'not_created',
+        }).then((order) => {
+            if (order.error) {
+                window.alert("Failed to create order", order.error, "error")
+                this.setState({ loading: false })
+                return
+            }
+            this.setState({ order })
+            this.setState({ loading: false, redirectToOrder: true })
+        }).catch((err) => {
+            window.alert("Failed to create order", err.message, "error")
+            this.setState({ loading: false })
         })
-
-        this.setState({redirectToOrder: true})
         
         
     }
@@ -91,7 +98,7 @@ class Buy extends Component {
                                             we will process your airtime payment.</span></li>
                                 </ul>
                                 <div className="table_btn">
-                                    <button onClick={this.onPayClick} disabled={false} className="btn btn-success"><i className="bi bi-cart"></i> Pay USD${config.pkg_price(this.state.package_.amount)} with Deriv </button>
+                                    <button onClick={this.onPayClick} disabled={this.state.loading} className="btn btn-success"><i className="bi bi-cart"></i>Pay USD${config.pkg_price(this.state.package_.amount)} with Deriv </button>
                                 </div>
                             </div>
                         </div>
@@ -110,7 +117,7 @@ class Buy extends Component {
             component = <Navigate to="/login" />
         }
 
-        return  this.state.loading ? <Loader text="Loading package" /> : component
+        return  this.state.loading ? <Loader text={this.state.loadingMsg} /> : component
     }
 }
 
