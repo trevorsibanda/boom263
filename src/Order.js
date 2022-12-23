@@ -86,7 +86,7 @@ function OrderSuccess(props) {
                 <li><i className="vi bi-chevron-right"></i>Order ID: <b>{order._id}</b></li>
                 <li><i className="vi bi-chevron-right"></i>Buyer account: <b>{order.purchaser.fullname}</b></li>
                 <li><i className="vi bi-chevron-right"></i>Amount Paid: <b>USD${order.price_paid}</b></li>
-                <li><i className="vi bi-chevron-right"></i>Time Paid: <b>{order.paidAt}</b></li>
+                <li><i className="vi bi-chevron-right"></i>Time Paid: <b>{order.paidAt ? order.paidAt["@ts"] : "recently"}</b></li>
                 <li>Need help? <a href="/support">Talk to our customer support on Whatsapp</a></li>
               </ul>
 
