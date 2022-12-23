@@ -176,7 +176,7 @@ function OrderPending(props) {
                                 <p>Thank you for verifying this transaction, click the button below to process this transaction.
                 <br/>If successful, you will instantly see your airtime.                   
                       </p>
-                      <p>You are about to purchase {order.package_.name} for {config.pkg_price( order.package_.amount )} under Order #{order._id}</p>
+                      <p>You are about to purchase {order.package_.name} for USD${config.pkg_price( order.package_.amount )} under Order #{order._id}</p>
                                     </> : 
                                         
                                         <><h2><span>Check your email to complete this order</span> </h2> 
@@ -192,11 +192,11 @@ function OrderPending(props) {
               </ul>
               <div className="row">
                 <div className="col-md-12">
-                    <button onClick={verifyAndPay} disabled={disabled} className="btn btn-block btn-lg btn-danger">Verify and buy Econet USD $1.00</button>    
+                    <button onClick={verifyAndPay} disabled={disabled} className="btn btn-block btn-lg btn-danger">Verify and buy {order.package_.name} for USD${config.pkg_price( order.package_.amount )}</button>    
                 </div>  
               </div> 
               <ul className="list-unstyled"> 
-                <li><i className="vi bi-chevron-right"></i><b>You are paying ${order.price}</b></li>
+                <li><i className="vi bi-chevron-right"></i><b>You are paying USD${config.pkg_price(order.package_.amount)}</b></li>
               </ul>
 
             </div>
