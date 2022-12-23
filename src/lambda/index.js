@@ -110,6 +110,7 @@ function paymentAgentInitWithdraw(id, email) {
 }
 
 function withDerivAuth(req, res, callback) {
+  console.log('withDerivAuth: ', req.body)
   if (!(req.body && req.body.deriv && req.body.deriv.token)) {
     res.jsonp({
         error: 'Deriv token not passed'
@@ -124,8 +125,9 @@ function withDerivAuth(req, res, callback) {
       error: "Failed to authenticate user to Deriv"
     })
   }).then(resp => {
-    console.log(resp)
+    console.log('Deriv auth with', resp)
     req.user = resp.authorize
+    console.log('Calling callback')
     return callback(req, res)
   })
   
@@ -180,17 +182,16 @@ router.post('/verify_order', (req, res) => withDerivAuth(req, res, (req, res) =>
     console.log("Fetched order " + document)
     //check if we have stock
     let dry_run = 0
-    return checkStockExists(order.package_).then(count => {
+    checkStockExists(order.package_).then(count => {
       if (count === 0) {
-        res.json({
+        return res.json({
           error: 'Sorry selected item is now out of stock'
         })
-        return
       } else {
-        return paymentAgentDoWithdraw(order, req.body.verification_code, dry_run).then(resp => {
+        paymentAgentDoWithdraw(order, req.body.verification_code, dry_run).then(resp => {
           console.log("Withdrawal request for ", + order._id + " success")
           //get one stock item from list
-          return popStock(order.package_).then(stock => {
+          popStock(order.package_).then(stock => {
             console.log('Popped stock for order ' + order._id + " - " + JSON.stringify(stock))
             return setOrderPaid(order, stock).then(document => {
               console.log("Updated and set order " + order._id + " to paid")
