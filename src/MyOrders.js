@@ -45,9 +45,7 @@ export default function MyOrders(props) {
               </p>
 
               <ul className="list-unstyled">
-                <li><i className="vi bi-chevron-right"></i><Link to="/"  > Bought Econet 1USD , 3 days ago</Link></li>
-                <li><i className="vi bi-chevron-right"></i><Link to="/" className="text-danger" >FAILED: Econet 1USD , 3 days ago</Link></li>
-                    {orders.forEach(order => 
+                {orders.forEach(order => 
                       <li><i className="vi bi-chevron-right"></i><Link to={"/order/" + order._id}>{order_status[order.status]} {order.package._name} for USD${order.package_.amount} <br />ID: {order._id}</Link></li>
                 )}
                     

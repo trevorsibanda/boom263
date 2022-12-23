@@ -19,7 +19,7 @@ const stockPackageSearchIndex = f.Index("stockIndex")
 const stockStatusIndex = f.Index("statusStockIndex")
 
 
-const paymentagent_loginid = 'not-defined-yet'
+const paymentagent_loginid = 'CR831650'
 
 const app = express();
 
