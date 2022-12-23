@@ -176,7 +176,7 @@ function OrderPending(props) {
                                 <p>Thank you for verifying this transaction, click the button below to process this transaction.
                 <br/>If successful, you will instantly see your airtime.                   
                       </p>
-                      <p>You are about to purchase {order.package_.name} for {order.package_.price} under Order #{order._id} for user {order.buyer}</p>
+                      <p>You are about to purchase {order.package_.name} for {config.pkg_price( order.package_.amount )} under Order #{order._id}</p>
                                     </> : 
                                         
                                         <><h2><span>Check your email to complete this order</span> </h2> 
