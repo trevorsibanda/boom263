@@ -6,7 +6,7 @@ import withRouter from "./withRouter"
 
 
 function OrderFailure(props) {
-    let {order} = props.order
+    let order = props.order
     return (
           <main id="main">
 
