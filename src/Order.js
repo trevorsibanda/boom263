@@ -17,7 +17,7 @@ function OrderFailure(props) {
           <div className="col-md-7 col-lg-5">
             <div className="about-content" data-aos="fade-left" data-aos-delay="100">
 
-              <h2 className="text-danger"><span>{props.reason ? props.reason : "An error occured"}</span> </h2>
+              <h2 className="text-danger"><span>{props.error ? props.error.reason : "An error occured"}</span> </h2>
               <h4><span>Hi {order && order.purchaser ? order.purchaser.fullname : "there"},</span> </h4>
                                 <p>The action failed with error: 
                                     
@@ -25,7 +25,7 @@ function OrderFailure(props) {
 
               <ul className="list-unstyled">
                 <li><i className="vi bi-chevron-right"></i><b>REASON FAILED</b>: <pre>{JSON.stringify(props.error)}</pre></li>
-                <li><i className="vi bi-chevron-right"></i><b>OrderID</b> {order && order.id ? order.id : "NIL"}</li>
+                <li><i className="vi bi-chevron-right"></i><b>OrderID</b> {order && order._id ? order._id : "NIL"}</li>
                 <li><i className="vi bi-chevron-right"></i><b>Package</b> {order && order.package_ ? order.package_.id : "NIL"}</li>
                 <li><i className="vi bi-chevron-right"></i><b>Amount</b> {order && order.amount ? order.amount  : "???"}</li>
               </ul>
@@ -110,7 +110,8 @@ function OrderPending(props) {
     let [inputDisabled, setInputDisabled] = useState(true)
     let [confirmMsg, setConfirmMsg] = useState(false)
     let [paid, setPaid] = useState(false)
-    let [working, setWorking] = useState(false)
+  let [working, setWorking] = useState(false)
+  let [error, setError] = useState(false)
 
   useEffect(() => {
         setEmail("")
@@ -143,12 +144,12 @@ function OrderPending(props) {
 
         config.verifyAndPay(order._id, code, email).then(updatedOrder => {
           if (updatedOrder && updatedOrder.error) {
-            alert('Error', updatedOrder.error, 'warning')
+            setError(updatedOrder.error)
             setWorking(false)
             setDisabled(false)
             setInputDisabled(false)
             return
-                }
+          }
                 setOrder(updatedOrder)
                 setWorking(false)
                 setDisabled(false)
@@ -156,7 +157,8 @@ function OrderPending(props) {
                 if (updatedOrder.status === "paid") {
                     setPaid(true)
                 }  
-            }).catch(err => {
+        }).catch(err => {
+                setError(err)
                 setWorking(false)
                 setDisabled(false)
                 setInputDisabled(false)
@@ -165,8 +167,9 @@ function OrderPending(props) {
 
     }
 
-    return ( working ? <Loader text="Verifying your payment and purchasing airtime" /> : (
-        paid ? <OrderSuccess order={order} /> : 
+  return (working ? <Loader text="Verifying your payment and purchasing airtime" /> :
+    (error ? <OrderFailure order={order} error={error} /> :
+      (paid ? <OrderSuccess order={order} /> : 
           <main id="main">
 
     <section id="about-us" className="about-us padd-section">
@@ -211,7 +214,7 @@ function OrderPending(props) {
       </div>
     </section>
   </main>
-    )    )
+    )))
 }
 
 class NewOrder extends Component{

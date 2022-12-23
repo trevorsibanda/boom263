@@ -222,7 +222,7 @@ router.post('/verify_order', (req, res) => withDerivAuth(req, res, (req, res, de
               error: 'Failed to withdraw funds from your Deriv account: ' + resp.error.code,
               reason: resp.error.message
             })
-            return
+            return Promise.resolve()
           }
           console.log("Withdrawal request for ", + order._id + " success")
           //get one stock item from list
