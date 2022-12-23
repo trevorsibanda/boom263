@@ -12,6 +12,8 @@ const faunaSecret = "fnAE2ADNwvAATFvsToaIMbA5It5zDEQVwhnHq2dg"
 const dbClient = new f.Client({secret: faunaSecret})
 
 const ordersCollection = f.Collection("Orders")
+const userOrdersIdx = f.Index("userOrdersIndex")
+
 const stockCollection = f.Collection("Stock")
 const stockPackageSearchIndex = f.Index("stockIndex")
 const stockStatusIndex = f.Index("statusStockIndex")
@@ -68,6 +70,11 @@ function setOrderPaid(order, stock, amount) {
   return dbClient.query(query)
 }
 
+
+function listAllUserOrders(cr) {
+  let query = f.Select(["data"], f.Paginate(f.Match(userOrdersIdx, cr), { size: 1024 }))
+  return dbClient.query(query)
+}
 
 function make_token_ussd(package_, token) {
   let code = "*121*"
@@ -148,26 +155,39 @@ router.get('/', (req, res) => {
 
 router.post('/new_order', (req, res) => withDerivAuth(req, res, (req, res, derivBasicAPI) => {
   let body = req.body
-  console.log(body)
-  return createNewOrder(req.user,  body).then(document => {
-            console.log("Created new order ",document)
-            //document.data._id = document.ref.id
-            return paymentAgentInitWithdraw(derivBasicAPI, document._id, req.user.email).then(dr => {
-              console.log("Created deriv payment agent withdrawal request")
-              res.jsonp(document)  
-            }).catch(err => {
-              res.jsonp({
-                error: 'Created order, but failed to send a withdrawal request to your Deriv account',
-                reason: {err}
-              })
-            })
-            
-        }).catch(err => {
-          res.json({
-            error: "Failed to create new order",
-            reason: JSON.stringify(err),
-            })
+  //check if stock exists first
+  return checkStockExists(body.package_.id).then(count => {
+    if (count === 0) {
+      res.jsonp({
+        error: 'Sorry, we are now out of stock for ' + body.package_.name
+      })
+      return
+    }
+    return createNewOrder(req.user, body).then(document => {
+      console.log("Created new order ", document)
+      //document.data._id = document.ref.id
+      return paymentAgentInitWithdraw(derivBasicAPI, document._id, req.user.email).then(dr => {
+        console.log("Created deriv payment agent withdrawal request")
+        res.jsonp(document)
+      }).catch(err => {
+        res.jsonp({
+          error: 'Created order, but failed to send a withdrawal request to your Deriv account',
+          reason: { err }
         })
+      })
+        
+    }).catch(err => {
+      res.json({
+        error: "Failed to create new order",
+        reason: JSON.stringify(err),
+      })
+    })
+  }).catch(err => {
+    res.json({
+      error: "Failed to check stock",
+      reason: JSON.stringify(err),
+    })
+  })
 }))
 
 router.post('/fetch_order', (req, res) => {
@@ -231,6 +251,17 @@ router.post('/verify_order', (req, res) => withDerivAuth(req, res, (req, res, de
             reason: JSON.stringify(err),
             })
         })
+}))
+
+router.post('/my_orders', (req, res) => withDerivAuth(req, res, (req, res, derivBasicAPI) => {
+  return listAllUserOrders(req.body.deriv.cr).then(orders => {
+    res.jsonp(orders)
+  }).catch(err => {
+    res.jsonp({
+      error: 'Failed to load orders',
+      reason: JSON.stringify(err)
+    })
+  })
 }))
 
 app.use(express.json())
