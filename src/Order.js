@@ -234,13 +234,9 @@ class NewOrder extends Component{
       }
         
         this.state = {
-            working: true, success: false, order: order, error: ''
+            working: true, success: false, order: order, loggedIn: config.checkLoggedIn(), error: ''
         }
-        
-
-        
-       
-        
+      
     }
 
     componentDidMount() {
@@ -260,9 +256,9 @@ class NewOrder extends Component{
     }
 
     render() {
-        return  this.state.working ? <Loader text="Creating your order..." /> : (this.state.success ?
+        return  this.state.loggedIn ? ( this.state.working ? <Loader text="Creating your order..." /> : (this.state.success ?
             <Navigate to={this.state.redirect} /> :
-            <OrderFailure reason={"Failed to create new order"} error={this.state.error} order={this.state.order} />) 
+            <OrderFailure reason={"Failed to create new order"} error={this.state.error} order={this.state.order} />)) : <Navigate to="/login" /> 
     }
     
 }
@@ -307,6 +303,9 @@ function Order(props) {
             page = <OrderSuccess order={order} />
         }
     }
+    
+  
+    
 
     return props.params.id === "new" ? <NewOrder package_={props.params.package_} /> : (loading ? <Loader text="Loading your order" /> : page)
 }
