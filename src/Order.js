@@ -18,7 +18,7 @@ function OrderFailure(props) {
             <div className="about-content" data-aos="fade-left" data-aos-delay="100">
 
               <h2 className="text-danger"><span>{props.reason ? props.reason : "An error occured"}</span> </h2>
-              <h4><span>Hi Ezra,</span> </h4>
+              <h4><span>Hi {order && order.purchaser ? order.purchaser.fullname : "there"},</span> </h4>
                                 <p>The action failed with error: 
                                     
               </p>
@@ -172,7 +172,7 @@ function OrderPending(props) {
             <div className="about-content" data-aos="fade-left" data-aos-delay="100">
 
             {confirmMsg ? <><h2><span>Confirm you are buying {order.package_.name} </span> </h2> 
-              <h4><span>Hi Ezra,</span> </h4>
+              <h4><span>Hi {order.purchaser.fullname},</span> </h4>
                                 <p>Thank you for verifying this transaction, click the button below to process this transaction.
                 <br/>If successful, you will instantly see your airtime.                   
                       </p>
