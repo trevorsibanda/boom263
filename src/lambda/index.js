@@ -104,7 +104,8 @@ function retrieveOrder(order_id) {
 }
 
 function paymentAgentDoWithdraw(derivBasicAPI, order, verification_code, dry_run = 1) {
-  let description = "Purchase " + order.package_.name + " from Boom263"
+  let id = "".replace("_", " ")
+  let description = "Purchase " + id + " from Boom263"
   let currency = 'USD'
   let data = {amount: pkg_price(order.package_.amount), currency, description, dry_run, paymentagent_withdraw: 1, paymentagent_loginid, verification_code}
   console.log("Payment agent processing withdrawal", data)
