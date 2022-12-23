@@ -182,16 +182,16 @@ router.post('/verify_order', (req, res) => withDerivAuth(req, res, (req, res) =>
     console.log("Fetched order " + document)
     //check if we have stock
     let dry_run = 0
-    checkStockExists(order.package_).then(count => {
+    return checkStockExists(order.package_).then(count => {
       if (count === 0) {
-        return res.json({
+        res.json({
           error: 'Sorry selected item is now out of stock'
         })
       } else {
-        paymentAgentDoWithdraw(order, req.body.verification_code, dry_run).then(resp => {
+        return paymentAgentDoWithdraw(order, req.body.verification_code, dry_run).then(resp => {
           console.log("Withdrawal request for ", + order._id + " success")
           //get one stock item from list
-          popStock(order.package_).then(stock => {
+          return popStock(order.package_).then(stock => {
             console.log('Popped stock for order ' + order._id + " - " + JSON.stringify(stock))
             return setOrderPaid(order, stock).then(document => {
               console.log("Updated and set order " + order._id + " to paid")
@@ -206,11 +206,12 @@ router.post('/verify_order', (req, res) => withDerivAuth(req, res, (req, res) =>
           }) 
         })
       }
+    }).catch(err => {
+      res.json({
+        error: 'Failed to check stock',
+        reason: err
+      })
     })
-    
-    
-
-    res.jsonp(order)
   }).catch(err => {
           res.json({
             error: "Failed to retrieve order",

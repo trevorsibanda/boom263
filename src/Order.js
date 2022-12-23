@@ -85,7 +85,7 @@ function OrderSuccess(props) {
               <ul className="list-unstyled"> 
                 <li><i className="vi bi-chevron-right"></i>Order ID: <b>{order._id}</b></li>
                 <li><i className="vi bi-chevron-right"></i>Buyer account: <b>{order.cr}</b></li>
-                <li><i className="vi bi-chevron-right"></i>Amount Paid: <b>USD${order.price}</b></li>
+                <li><i className="vi bi-chevron-right"></i>Amount Paid: <b>USD${order.price_paid}</b></li>
                 <li><i className="vi bi-chevron-right"></i>Time Paid: <b>{order.paidAt}</b></li>
                 <li>Need help? <a href="/support">Talk to our customer support on Whatsapp</a></li>
               </ul>
@@ -171,16 +171,16 @@ function OrderPending(props) {
           <div className="col-md-7 col-lg-5">
             <div className="about-content" data-aos="fade-left" data-aos-delay="100">
 
-            {confirmMsg ? <><h2><span>Confirm you are buying {order.name} </span> </h2> 
+            {confirmMsg ? <><h2><span>Confirm you are buying {order.package_.name} </span> </h2> 
               <h4><span>Hi Ezra,</span> </h4>
                                 <p>Thank you for verifying this transaction, click the button below to process this transaction.
                 <br/>If successful, you will instantly see your airtime.                   
                       </p>
-                      <p>You are about to purchase {order.name} for {order.price} under Order #{order._id} for user {order.buyer}</p>
+                      <p>You are about to purchase {order.package_.name} for {order.package_.price} under Order #{order._id} for user {order.buyer}</p>
                                     </> : 
                                         
                                         <><h2><span>Check your email to complete this order</span> </h2> 
-                                            <h4><span>Hi {order.buyer},</span> </h4>
+                                            <h4><span>Hi {order.purchaser.fullname},</span> </h4>
                         <p>Deriv sent an email to your account, please click on the verification link in the email to complete this transaction.
                           <br />This will complete your airtime purchase.
                         </p>
