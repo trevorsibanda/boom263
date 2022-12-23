@@ -100,6 +100,8 @@ function OrderSuccess(props) {
     )    
 }
 
+
+
 function OrderPending(props) {
     let [order, setOrder] = useState(props.order)
    
@@ -117,26 +119,9 @@ function OrderPending(props) {
         if (params && params.code && !working) {
             setCode(params.code)
             setInputDisabled(true)
-            setDisabled(true)
+            setDisabled(false)
             setConfirmMsg(true)
-            setWorking(true)
-
-            config.verifyAndPay(order._id, code, email).then(updatedOrder => {
-                
-                setOrder(updatedOrder)
-                setWorking(false)
-                setDisabled(false)
-                setInputDisabled(false)
-                if (updatedOrder.status === "complete") {
-                    setPaid(true)
-                }  
-            }).catch(err => {
-                setWorking(false)
-                setDisabled(false)
-                setInputDisabled(false)
-                alert('Error', 'Failed to process your order with error: '+ JSON.stringify(err), 'warning')
-            })
-
+            setWorking(false)
             
         } else {
             setInputDisabled(true)
@@ -158,24 +143,24 @@ function OrderPending(props) {
 
 
         config.verifyAndPay(order._id, code, email).then(updatedOrder => {
-            
-            setOrder(updatedOrder)
-            setWorking(false)
-            setDisabled(false)
-            setInputDisabled(false)
-            if (updatedOrder.status === "complete") {
-                setPaid(true)
-            }  
-        }).catch(err => {
-            setWorking(false)
-            setDisabled(false)
-            setInputDisabled(false)
-            alert('Error', 'Failed to process your order with error: '+ JSON.stringify(err), 'warning')
-        })
+                
+                setOrder(updatedOrder)
+                setWorking(false)
+                setDisabled(false)
+                setInputDisabled(false)
+                if (updatedOrder.status === "complete") {
+                    setPaid(true)
+                }  
+            }).catch(err => {
+                setWorking(false)
+                setDisabled(false)
+                setInputDisabled(false)
+                alert('Error', 'Failed to process your order with error: '+ JSON.stringify(err), 'warning')
+            })
 
     }
 
-    return working ? <Loader text="Verifying your payment and purchasing airtime" /> : (
+    return ( working ? <Loader text="Verifying your payment and purchasing airtime" /> : (
         paid ? <OrderSuccess order={order} /> : 
           <main id="main">
 
@@ -190,14 +175,15 @@ function OrderPending(props) {
               <h4><span>Hi Ezra,</span> </h4>
                                 <p>Thank you for verifying this transaction, click the button below to process this transaction.
                 <br/>If successful, you will instantly see your airtime.                   
-                                        </p>
+                      </p>
+                      <p>You are about to purchase {order.name} for {order.price} under Order #{order._id} for user {order.buyer}</p>
                                     </> : 
                                         
                                         <><h2><span>Check your email to complete this order</span> </h2> 
                                             <h4><span>Hi {order.buyer},</span> </h4>
-                                <p>Deriv sent an email to your account, please click on the verification link in the email to complete this transaction.
-                <br/>This will complete your airtime purchase.                   
-                                        </p>
+                        <p>Deriv sent an email to your account, please click on the verification link in the email to complete this transaction.
+                          <br />This will complete your airtime purchase.
+                        </p>
                                         </>}
 
               <ul className="list-unstyled">
@@ -220,7 +206,7 @@ function OrderPending(props) {
       </div>
     </section>
   </main>
-    )    
+    )    )
 }
 
 class NewOrder extends Component{
