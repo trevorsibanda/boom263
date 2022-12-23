@@ -76,7 +76,7 @@ function OrderSuccess(props) {
                   </div>
                 
                 <div className="table_btn">
-                    <Link to={"/buy/"+order.package_} className="btn btn-default"><i className="bi bi-cart"></i> Buy this again</Link>
+                    <Link to={"/buy/"+order.package_.id} className="btn btn-default"><i className="bi bi-cart"></i> Buy this again</Link>
                 </div>
               </div>
             </div>
