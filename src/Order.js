@@ -55,7 +55,7 @@ function OrderSuccess(props) {
             <div className="about-content" data-aos="fade-left" data-aos-delay="100">
 
               <h2><span>Payment received</span> </h2>
-            <h4><span>Successfully bought {order.name}</span> </h4>
+            <h4><span>Successfully bought {order.package_.name}</span> </h4>
               <p>Thank you for using Boom263, find your order below.</p>
               <div className="block-pricing">
               <div className="pricing-table">
@@ -84,7 +84,7 @@ function OrderSuccess(props) {
                
               <ul className="list-unstyled"> 
                 <li><i className="vi bi-chevron-right"></i>Order ID: <b>{order._id}</b></li>
-                <li><i className="vi bi-chevron-right"></i>Buyer account: <b>{order.cr}</b></li>
+                <li><i className="vi bi-chevron-right"></i>Buyer account: <b>{order.purchaser.fullname}</b></li>
                 <li><i className="vi bi-chevron-right"></i>Amount Paid: <b>USD${order.price_paid}</b></li>
                 <li><i className="vi bi-chevron-right"></i>Time Paid: <b>{order.paidAt}</b></li>
                 <li>Need help? <a href="/support">Talk to our customer support on Whatsapp</a></li>
@@ -148,7 +148,7 @@ function OrderPending(props) {
                 setWorking(false)
                 setDisabled(false)
                 setInputDisabled(false)
-                if (updatedOrder.status === "complete") {
+                if (updatedOrder.status === "paid") {
                     setPaid(true)
                 }  
             }).catch(err => {
@@ -285,7 +285,7 @@ function Order(props) {
             page = <OrderPending order={order} />
         } else if (order.status === 'cancelled') {
             page = <OrderFailure order={order} error={error} />
-        } else if (order.status === 'complete') {
+        } else if (order.status === 'paid') {
             page = <OrderSuccess order={order} />
         }
     }
