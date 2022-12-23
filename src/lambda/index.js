@@ -6,10 +6,6 @@ const serverless = require('serverless-http');
 const DerivAPI = require('@deriv/deriv-api/dist/DerivAPI');
 
 let appId = 33235
-let token = "qWnzrKpq9c1qZlI"// "a1-AQuiTI4RnsDdHAXQlfxtMFcjDyi6z"
-let conn = new WebSocket('wss://ws.binaryws.com/websockets/v3?app_id='+ appId);
-let d        = new DerivAPI({ connection: conn });
-let b = d.basic
 
 const faunaSecret = "fnAE2ADNwvAATFvsToaIMbA5It5zDEQVwhnHq2dg"
 
@@ -21,10 +17,14 @@ const stockPackageSearchIndex = f.Index("stockIndex")
 const stockStatusIndex = f.Index("statusStockIndex")
 
 
-const paymentagent_loginid = ''
+const paymentagent_loginid = 'not-defined-yet'
 
 const app = express();
 
+
+function pkg_price(a) {
+  return a.toFixed(2) * 1.1
+}
 
 function createNewOrder(user, data) {
   var document = {
@@ -35,7 +35,7 @@ function createNewOrder(user, data) {
       "cr": data.cr,
       "email": user.email,
       "purchaser": user,
-      "price": data.price * data.quantity,
+      "price":  pkg_price( data.price * data.quantity),
       "quantity": data.quantity,
       "created": f.Now(),
       "amount": data.amount * data.quantity,
@@ -54,7 +54,8 @@ function createNewOrder(user, data) {
 
 function checkStockExists(package_) {
     let query = f.Count(f.Match(stockPackageSearchIndex, package_)) //Map(Paginate(Match(Index("stockIndex"), "econet_usd1")), Lambda("v", Select("data", Get(Var("v")))))
-    return dbClient.query(query)
+  return dbClient.query(query)
+    
 }
 
 function popStock(package_) {
@@ -62,10 +63,11 @@ function popStock(package_) {
   return dbClient.query(query)
 }
 
-function setOrderPaid(order, stock) {
-  let query = f.Update(f.Ref(ordersCollection, order._id), {data: {"status": "paid", "token": stock.data, "stock_id": stock.ref}})
+function setOrderPaid(order, stock, amount) {
+  let query = f.Update(f.Ref(ordersCollection, order._id), {data: {"status": "paid", "paidAt": f.Now(), "amount_paid": amount, "token": stock.data, "stock_id": stock.ref}})
   return dbClient.query(query)
 }
+
 
 function make_token_ussd(package_, token) {
   let code = "*121*"
@@ -88,28 +90,31 @@ function addNewStock(package_, token, image) {
 }
 
 function retrieveOrder(order_id) {
-  console.log(order_id)
   return dbClient.query(f.Get(f.Ref(ordersCollection, order_id))).then(document => {
     document.data._id = document.ref.id
-    return document.data
+    return Promise.resolve(document.data)
     })
 }
 
-function paymentAgentDoWithdraw(order, verification_code, dry_run = 1) {
-  let description = "Purchase " + order.package_ + " from Boom263"
+function paymentAgentDoWithdraw(derivBasicAPI, order, verification_code, dry_run = 1) {
+  let description = "Purchase " + order.package_.name + " from Boom263"
   let currency = 'USD'
-  let data = {amount: order.price, currency , description, dry_run, paymentagent_withdraw: 1, paymentagent_loginid, verification_code}
-  console.log("Payment agent processing withdrawal")
-  return b.paymentAgentWithdraw(data)
+  let data = {amount: pkg_price(order.package_.amount), currency, description, dry_run, paymentagent_withdraw: 1, paymentagent_loginid, verification_code}
+  console.log("Payment agent processing withdrawal", data)
+  return derivBasicAPI.paymentagentWithdraw(data).catch(console.log)
 }
 
-function paymentAgentInitWithdraw(id, email) {
+function paymentAgentInitWithdraw(derivBasicAPI, id, email) {
   let data = { type: "paymentagent_withdraw", "verify_email": email, 'url_parameters': { "utm_content": id } }
   console.log("Sending deriv payment agent withdraw email ", data)
-  return b.verifyEmail(data)
+  return derivBasicAPI.verifyEmail(data)
 }
 
 function withDerivAuth(req, res, callback) {
+  let conn = new WebSocket('wss://ws.binaryws.com/websockets/v3?app_id='+ appId);
+  let d        = new DerivAPI({ connection: conn });
+  let b = d.basic
+
   console.log('withDerivAuth: ', req.body)
   if (!(req.body && req.body.deriv && req.body.deriv.token)) {
     res.jsonp({
@@ -128,7 +133,7 @@ function withDerivAuth(req, res, callback) {
     console.log('Deriv auth with', resp)
     req.user = resp.authorize
     console.log('Calling callback')
-    return callback(req, res)
+    return callback(req, res, b)
   })
   
 
@@ -141,13 +146,13 @@ router.get('/', (req, res) => {
   res.end();
 });
 
-router.post('/new_order', (req, res) => withDerivAuth(req, res, (req, res) => {
+router.post('/new_order', (req, res) => withDerivAuth(req, res, (req, res, derivBasicAPI) => {
   let body = req.body
   console.log(body)
   return createNewOrder(req.user,  body).then(document => {
             console.log("Created new order ",document)
             //document.data._id = document.ref.id
-            return paymentAgentInitWithdraw(document._id, req.user.email).then(dr => {
+            return paymentAgentInitWithdraw(derivBasicAPI, document._id, req.user.email).then(dr => {
               console.log("Created deriv payment agent withdrawal request")
               res.jsonp(document)  
             }).catch(err => {
@@ -177,23 +182,25 @@ router.post('/fetch_order', (req, res) => {
         })
 })
 
-router.post('/verify_order', (req, res) => withDerivAuth(req, res, (req, res) => {
+router.post('/verify_order', (req, res) => withDerivAuth(req, res, (req, res, derivBasicAPI) => {
+  console.log(req.body)
   return retrieveOrder(req.body._id).then(order => {
-    console.log("Fetched order " + document)
     //check if we have stock
     let dry_run = 0
-    return checkStockExists(order.package_).then(count => {
+    console.log("Checking stock for " + order.package_.id)
+    return checkStockExists(order.package_.id).then(count => {
+      console.log("Stock count for " + order.package_.id + " is " + count)
       if (count === 0) {
-        res.json({
+        res.jsonp({ 
           error: 'Sorry selected item is now out of stock'
         })
       } else {
-        return paymentAgentDoWithdraw(order, req.body.verification_code, dry_run).then(resp => {
+        return paymentAgentDoWithdraw(derivBasicAPI, order, req.body.verification_code, dry_run).then(resp => {
           console.log("Withdrawal request for ", + order._id + " success")
           //get one stock item from list
-          return popStock(order.package_).then(stock => {
+          return popStock(order.package_.id).then(stock => {
             console.log('Popped stock for order ' + order._id + " - " + JSON.stringify(stock))
-            return setOrderPaid(order, stock).then(document => {
+            return setOrderPaid(order, stock, pkg_price(order.package_.amount)).then(document => {
               console.log("Updated and set order " + order._id + " to paid")
               res.jsonp(document.data)
             }).catch(err => {
@@ -203,7 +210,13 @@ router.post('/verify_order', (req, res) => withDerivAuth(req, res, (req, res) =>
                 reason: stock.data
               })
             })
-          }) 
+          }).catch(console.log) 
+        }).catch(err => {
+          console.log("Failed to process withdrawal request for order " + order._id + "with error: "+ err)
+          res.jsonp({
+            error: 'Failed to process withdrawal request',
+            reason: err
+          })
         })
       }
     }).catch(err => {
