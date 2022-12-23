@@ -66,7 +66,8 @@ function getPackage(package_) {
 }
 
 function saveCurrentOrder(order) {
-    reactLocalStorage.setObject('active_order', order)
+    let r = reactLocalStorage.setObject('active_order', order)
+    return Promise.resolve(r)
 }
 
 function derivAuthToken() {
