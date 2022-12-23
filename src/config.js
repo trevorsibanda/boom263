@@ -92,7 +92,7 @@ function checkDerivToken() {
 }
 
 function api_url(uri) {
-    return (devMode ? "http://localhost:9000/" : "" ) + ".netlify/functions/index/" + uri
+    return (devMode ? "http://localhost:9000/" : "/" ) + ".netlify/functions/index/" + uri
 }
 
 function fetchOrder(_id) {
