@@ -48,7 +48,7 @@ function calculate_price(price) {
 }
 
 function pastOrders() {
-    return reactLocalStorage.get('past_orders', [])
+    return api_post('my_orders', {})
 }
 
 function currentOrder(checkUrl = false) {
