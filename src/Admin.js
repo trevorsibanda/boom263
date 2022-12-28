@@ -154,15 +154,15 @@ function ListStock() {
       </tr>
     </thead>
     <tbody>
-        {stock.forEach(stock => {
+        {stock.forEach(s => {
      <tr>
-         <th scope="row">{stock.package_}</th>
-         <td><div className="pill pill-danger">{stock.status}</div></td>
-         <td>{stock.pretty_pin}</td>
-         <td>{stock.instructions}</td>
-         <td>{stock.ocr}</td>
-         <td>{stock.created_at}</td>
-         <td>{stock.provider}</td>
+         <th scope="row">{s.package_}</th>
+         <td><div className="pill pill-danger">{s.status}</div></td>
+         <td>{s.pretty}</td>
+         <td>{s.ussd}</td>
+         <td>{s.ocr}</td>
+         <td>{s.created_at["@ts"]}</td>
+         <td>show-image-here</td>
         <td><a href="/#"><i class="fa fa-times text-danger"></i> Delete</a></td>
       </tr>
         })}

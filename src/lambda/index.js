@@ -77,13 +77,14 @@ function listAllUserOrders(cr) {
   return dbClient.query(query)
 }
 
-function listAllStock(filter, pkg) {
-  var query
-  if (["free", "used", "all"].indexOf(filter) === -1) {
-    query = f.Select(["data"], f.Paginate(f.Match(stockAllStatusIndex, filter), { size: 1024 }))
+function listAllStock(filter) {
+  var idx
+  if (["free", "used", "all"].indexOf(filter) !== -1) {
+    idx = f.Index("stockAllStatusIndex")
   } else {
-    query = f.Select(["data"], f.Paginate(f.Match(stockStatusIndex, pkg, filter), { size: 1024 }))
+    idx = stockPackageSearchIndex
   }
+  let query = f.Map(f.Select("data", f.Paginate(f.Match(idx, filter), {size: 1000})), f.Lambda("v", f.Select("data", f.Get(f.Var("v")))))
   return dbClient.query(query)
 }
 
@@ -160,9 +161,9 @@ function withDerivAuth(req, res, callback) {
 
 function withAdminAuth(req, res, callback) {
   let expectedKey = 'dev-api-key'
-  if (!(req.headers && req.headers['X-Api-Key'] && req.headers['X-Api-Key'] !== expectedKey)) {
+  if (req.headers && req.headers['x-api-key'] && req.headers['x-api-key'] !== expectedKey) {
     res.jsonp({
-        error: 'Incorrect admin token not passed'
+        error: 'Incorrect admin token passed' + req.headers['x-api-key']
     })
     return
   }
