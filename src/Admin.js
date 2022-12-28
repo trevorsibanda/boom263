@@ -126,7 +126,6 @@ function ListStock() {
                                         <select value={filter} onChange={evt => applyStocksFilter(evt.target.value)} className="form-control">
                                             <option value="free">Free stock</option>
                                             <option value="used">Used stock</option>
-                                            <option value="all">All stock</option>
                                             {
                                                 config.packages.map((package_, index) => {
                                                     return <option value={package_.id} tabIndex={index}>{package_.name}</option>
@@ -150,8 +149,8 @@ function ListStock() {
       </tr>
     </thead>
     <tbody>
-        {stock.forEach(s => {
-     <tr>
+        {stock.map(s => {
+     return <tr>
          <th scope="row">{s.package_}</th>
          <td><div className="pill pill-danger">{s.status}</div></td>
          <td>{s.pretty}</td>
