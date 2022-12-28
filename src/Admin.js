@@ -100,6 +100,7 @@ function ListStock() {
         config.admin.filterStock(filter).then(stock => {
             if (stock.error) {
                 alert('Failed to apply filter', JSON.stringify(stock))
+                return
             }
             setStock(stock)
         }).catch(err => {
@@ -156,7 +157,7 @@ function ListStock() {
          <td>{s.pretty}</td>
          <td>{s.ussd}</td>
          <td>{s.ocr}</td>
-         <td>{s.created_at["@ts"]}</td>
+         <td>{s.created["@ts"]}</td>
          <td>show-image-here</td>
         <td><a href="/#"><i class="fa fa-times text-danger"></i> Delete</a></td>
       </tr>
