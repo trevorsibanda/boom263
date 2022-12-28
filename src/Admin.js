@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import config from "./config"
 
 function ListOrders(props) {
@@ -98,20 +98,15 @@ function ListStock() {
         setFilter(filter)
 
         config.admin.filterStock(filter).then(stock => {
+            if (stock.error) {
+                alert('Failed to apply filter', JSON.stringify(stock))
+            }
             setStock(stock)
         }).catch(err => {
             alert('Filter stock', 'Failed to filter stock, see log for error', 'error')
             console.log(err)
         })
     }
-
-    useEffect(() => {
-        if (filter === "") {
-            setFilter("free") 
-            applyStocksFilter("free")
-        }
-        
-    }, [filter, setFilter])
 
     let addNewStock = () => {
         alert("Adding new stock")
