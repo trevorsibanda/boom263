@@ -132,6 +132,22 @@ function stockReport() {
     return adminReport("stock")
 }
 
+function filterStock(filter) {
+    return api_post("admin_stock", {filter})
+}
+
+function addStock(stock, image) {
+    return api_post("admin_add_stock", {stock, image})
+}
+
+function removeStock(_id) {
+    return api_post("admin_remove_stock", {_id})
+}
+
+function editStock(_id, stock) {
+    return api_post("admin_edit_stock", {_id, stock})
+}
+
 
 function ordersReport() {
     return adminReport("orders")
@@ -145,12 +161,19 @@ const config = {
     packages,
     admin: {
         filterOrders,
+        filterStock,
+        addStock,
+        removeStock,
+        editStock,
         stockReport,
         ordersReport,
         refundOrder,
         setApiKey: (key) => {
             reactLocalStorage.set('api_key', key)
         },
+        getApiKey: () => {
+            return reactLocalStorage.get('api_key', '')
+        }
     },
     pkg_price: calculate_price,
     pastOrders,

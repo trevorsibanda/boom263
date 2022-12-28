@@ -16,6 +16,7 @@ const userOrdersIdx = f.Index("userOrdersIndex")
 
 const stockCollection = f.Collection("Stock")
 const stockPackageSearchIndex = f.Index("stockIndex")
+const stockAllStatusIndex = f.Index("stockAllStatusIndex")
 const stockStatusIndex = f.Index("statusStockIndex")
 
 
@@ -73,6 +74,16 @@ function setOrderPaid(order, stock, amount) {
 
 function listAllUserOrders(cr) {
   let query = f.Select(["data"], f.Paginate(f.Match(userOrdersIdx, cr), { size: 1024 }))
+  return dbClient.query(query)
+}
+
+function listAllStock(filter, pkg) {
+  var query
+  if (["free", "used", "all"].indexOf(filter) === -1) {
+    query = f.Select(["data"], f.Paginate(f.Match(stockAllStatusIndex, filter), { size: 1024 }))
+  } else {
+    query = f.Select(["data"], f.Paginate(f.Match(stockStatusIndex, pkg, filter), { size: 1024 }))
+  }
   return dbClient.query(query)
 }
 
@@ -145,6 +156,17 @@ function withDerivAuth(req, res, callback) {
   })
   
 
+}
+
+function withAdminAuth(req, res, callback) {
+  let expectedKey = 'dev-api-key'
+  if (!(req.headers && req.headers['X-Api-Key'] && req.headers['X-Api-Key'] !== expectedKey)) {
+    res.jsonp({
+        error: 'Incorrect admin token not passed'
+    })
+    return
+  }
+  return callback(req, res)
 }
 
 const router = express.Router();
@@ -267,6 +289,18 @@ router.post('/my_orders', (req, res) => withDerivAuth(req, res, (req, res, deriv
   }).catch(err => {
     res.jsonp({
       error: 'Failed to load orders',
+      reason: JSON.stringify(err)
+    })
+  })
+}))
+
+router.post('/admin_stock', (req, res) => withAdminAuth(req, res, (req, res) => {
+  
+  return listAllStock(req.body.filter).then(stock => {
+    res.jsonp(stock)
+  }).catch(err => {
+    res.jsonp({
+      error: 'Failed to load stock',
       reason: JSON.stringify(err)
     })
   })

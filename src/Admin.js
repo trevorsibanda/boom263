@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import config from "./config"
 
 function ListOrders(props) {
@@ -89,25 +89,32 @@ function ListOrders(props) {
     )
 }
 
-function ListStock(props) {
+function ListStock() {
 
-    let [orders, setStock] = useState([])
-    let [filter, setFilter] = useState("recent")
-    let apiKey = props.api_key
+    let [stock, setStock] = useState([])
+    let [filter, setFilter] = useState("")
 
-    let applyOrdersFilter = (filter) => {
+    let applyStocksFilter = (filter) => {
         setFilter(filter)
 
-        config.admin.filterOrders(apiKey, filter).then(orders => {
-            setStock(orders)
+        config.admin.filterStock(filter).then(stock => {
+            setStock(stock)
         }).catch(err => {
-            alert('Filter orders', 'Failed to filter orders, see log for error', 'error')
+            alert('Filter stock', 'Failed to filter stock, see log for error', 'error')
             console.log(err)
         })
     }
 
-    let addNewStock = () => {
+    useEffect(() => {
+        if (filter === "") {
+            setFilter("free") 
+            applyStocksFilter("free")
+        }
+        
+    }, [filter, setFilter])
 
+    let addNewStock = () => {
+        alert("Adding new stock")
     }
 
     return (
@@ -120,11 +127,15 @@ function ListStock(props) {
                                 </div>
                                 <div>
                                     <div className="form-control">
-                                        <select value={filter} onChange={evt => applyOrdersFilter(evt.target.value)} className="form-control">
-                                            <option value="paid">Paid Orders</option>
-                                            <option value="recent">Most Recent Orders</option>
-                                            <option value="today">Orders from today only</option>
-                                            <option value="failed">Failed orders</option>
+                                        <select value={filter} onChange={evt => applyStocksFilter(evt.target.value)} className="form-control">
+                                            <option value="free">Free stock</option>
+                                            <option value="used">Used stock</option>
+                                            <option value="all">All stock</option>
+                                            {
+                                                config.packages.map((package_, index) => {
+                                                    return <option value={package_.id} tabIndex={index}>{package_.name}</option>
+                                                })
+                                            }
                                         </select>
                                     </div>
                                 </div>
@@ -132,29 +143,27 @@ function ListStock(props) {
   <table className="table">
     <thead>
       <tr>
-        <th scope="col">#Order ID</th>
-        <th scope="col">Status</th>
         <th scope="col">Package</th>
-        <th scope="col">User</th>
-        <th scope="col">Email</th>
-        <th scope="col">User CR</th>
-        <th scope="col">Amount</th>
-        <th scope="col">Token</th>
+        <th scope="col">Status</th>
+        <th scope="col">PIN code</th>
+        <th scope="col">Instructions</th>
+        <th scope="col">OCR</th>
+        <th scope="col">Created</th>
+        <th scope="col">Provider</th>
         <th scope="col">Action</th>
       </tr>
     </thead>
     <tbody>
-        {orders.forEach(order => {
+        {stock.forEach(stock => {
      <tr>
-         <th scope="row">{order._id}</th>
-         <td><div className="pill pill-danger">{order.status}</div></td>
-         <td>{order.package_}</td>
-         <td>{order.fullname}</td>
-         <td>{order.email}</td>
-         <td>{order.cr}</td>
-         <td>{order.amount}</td>
-         <td>{order.token ? order.token.pretty : "N/A"}</td>
-        <td><a href="/#">Refund</a></td>
+         <th scope="row">{stock.package_}</th>
+         <td><div className="pill pill-danger">{stock.status}</div></td>
+         <td>{stock.pretty_pin}</td>
+         <td>{stock.instructions}</td>
+         <td>{stock.ocr}</td>
+         <td>{stock.created_at}</td>
+         <td>{stock.provider}</td>
+        <td><a href="/#"><i class="fa fa-times text-danger"></i> Delete</a></td>
       </tr>
         })}
       
@@ -170,7 +179,7 @@ function ListStock(props) {
 
 export default function Admin(props) {
 
-    let [apiKey, setApiKey] = useState("")
+    let [apiKey, setApiKey] = useState(config.admin.getApiKey())
     
 
     let stockReport = () => {
