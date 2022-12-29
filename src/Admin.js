@@ -5,7 +5,6 @@ function ListOrders(props) {
 
     let [orders, setOrders] = useState([])
     let [filter, setFilter] = useState("recent")
-    let apiKey = props.api_key
 
     let loadSpecificOrder = () => {
         let id = prompt("Please enter the order id here")
@@ -16,7 +15,7 @@ function ListOrders(props) {
     let applyOrdersFilter = (filter) => {
         setFilter(filter)
 
-        config.admin.filterOrders(apiKey, filter).then(norders => {
+        config.admin.filterOrders(filter).then(norders => {
             if (norders.error) {
                 alert('Failed to filter orders', norders.error, 'error')
                 return
