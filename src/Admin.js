@@ -66,8 +66,8 @@ function ListOrders(props) {
       </tr>
     </thead>
     <tbody>
-        {orders.forEach(order => {
-     <tr>
+        {orders.map(order => {
+     return <tr>
          <th scope="row">{order._id}</th>
          <td><div className="pill pill-danger">{order.status}</div></td>
          <td>{order.package_.id}</td>
