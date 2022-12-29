@@ -13,6 +13,8 @@ const dbClient = new f.Client({secret: faunaSecret})
 
 const ordersCollection = f.Collection("Orders")
 const userOrdersIdx = f.Index("userOrdersIndex")
+const allOrdersIndex = f.Index("allOrdersIndex")
+const orderStatusIndex = f.Index("orderStatusIndex")
 
 const stockCollection = f.Collection("Stock")
 const stockPackageSearchIndex = f.Index("stockIndex")
@@ -74,6 +76,23 @@ function setOrderPaid(order, stock, amount) {
 
 function listAllUserOrders(cr) {
   let query = f.Select(["data"], f.Paginate(f.Match(userOrdersIdx, cr), { size: 1024 }))
+  return dbClient.query(query)
+}
+
+function listAllOrders(filter) {
+  let today = f.Filter(f.Select(["data"], f.Paginate(f.Match (allOrdersIndex), { size: 1024 })), f.Lambda("v", f.Equals(f.Date(f.Select(["data", "created"], f.Get(f.Var("v")))), f.Date(f.Now()))))
+  let recent = f.Filter(f.Select(["data"], f.Paginate(f.Match(allOrdersIndex), { size: 100 })), f.Lambda("v", f.Equals(f.Date(f.Select(["data", "created"], f.Get(f.Var("v")))), f.Date(f.TimeSubtract(f.Now(), 1, "days")))))
+  let failed = f.Select(["data"], f.Paginate(f.Match(orderStatusIndex, "failed"), { size: 200 }))
+  let paid = f.Select(["data"], f.Paginate(f.Match  (orderStatusIndex, "paid"), { size: 500 }))    
+  let pending = f.Select(["data"], f.Paginate(f.Match(orderStatusIndex, "pending"), { size: 500 }))
+
+  let queries = { paid, today, recent, failed, pending }
+
+
+  if (["paid",  "failed", "pending"].indexOf(filter) === -1) {
+    return Promise.reject("Invalid filter")
+  } 
+  let query = f.Map(queries[filter], f.Lambda("v", f.Select("data", f.Get(f.Var("v")))))
   return dbClient.query(query)
 }
 
@@ -302,6 +321,18 @@ router.post('/admin_stock', (req, res) => withAdminAuth(req, res, (req, res) => 
   }).catch(err => {
     res.jsonp({
       error: 'Failed to load stock',
+      reason: JSON.stringify(err)
+    })
+  })
+}))
+
+router.post('/admin_orders', (req, res) => withAdminAuth(req, res, (req, res) => {
+  
+  return listAllOrders(req.body.filter).then(stock => {
+    res.jsonp(stock)
+  }).catch(err => {
+    res.jsonp({
+      error: 'Failed to load orders',
       reason: JSON.stringify(err)
     })
   })

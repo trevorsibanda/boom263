@@ -16,16 +16,20 @@ function ListOrders(props) {
     let applyOrdersFilter = (filter) => {
         setFilter(filter)
 
-        config.admin.filterOrders(apiKey, filter).then(orders => {
-            setOrders(orders)
+        config.admin.filterOrders(apiKey, filter).then(norders => {
+            if (norders.error) {
+                alert('Failed to filter orders', norders.error, 'error')
+                return
+            }
+            setOrders(norders)
         }).catch(err => {
             alert('Filter orders', 'Failed to filter orders, see log for error', 'error')
             console.log(err)
         })
     }
 
-    let addNewStock = () => {
-
+    let doRefund = () => {
+        alert('Process refund. Contact person directly')
     }
 
     return (
@@ -33,9 +37,7 @@ function ListOrders(props) {
                         <div className="block-pricing">
                             <div className="pricing-table">
                                 <h4>Manage Orders</h4>
-                                <div className="table_btn">
-                                    <button onClick={addNewStock} disabled={false} className="btn btn-success"><i className="bi bi-cart"></i> Add new stock</button>
-                                </div>
+                                
                                 <div className="table_btn">
                                     <button onClick={loadSpecificOrder} disabled={false} className="btn btn-warning"><i className="bi bi-eye"></i> Load specific order</button>
                                 </div>
@@ -69,13 +71,13 @@ function ListOrders(props) {
      <tr>
          <th scope="row">{order._id}</th>
          <td><div className="pill pill-danger">{order.status}</div></td>
-         <td>{order.package_}</td>
-         <td>{order.fullname}</td>
-         <td>{order.email}</td>
+         <td>{order.package_.id}</td>
+         <td>{order.purchaser.fullname}</td>
+         <td>{order.purchaser.email}</td>
          <td>{order.cr}</td>
-         <td>{order.amount}</td>
+         <td>{order.package_.amount}/{config.pkg_price(order.package_.amount)}</td>
          <td>{order.token ? order.token.pretty : "N/A"}</td>
-        <td><a href="/#">Refund</a></td>
+        <td><a href="/#" class="text-danger" onClick={doRefund}>Refund</a></td>
       </tr>
         })}
       
