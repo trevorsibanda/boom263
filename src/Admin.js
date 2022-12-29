@@ -97,12 +97,12 @@ function ListStock() {
     let applyStocksFilter = (filter) => {
         setFilter(filter)
 
-        config.admin.filterStock(filter).then(stock => {
-            if (stock.error) {
-                alert('Failed to apply filter', JSON.stringify(stock))
+        config.admin.filterStock(filter).then(nstock => {
+            if (nstock.error) {
+                alert('Failed to apply filter', JSON.stringify(nstock))
                 return
             }
-            setStock(stock)
+            setStock(nstock)
         }).catch(err => {
             alert('Filter stock', 'Failed to filter stock, see log for error', 'error')
             console.log(err)
