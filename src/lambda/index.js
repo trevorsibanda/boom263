@@ -5,9 +5,10 @@ const path = require('path');
 const serverless = require('serverless-http');
 const DerivAPI = require('@deriv/deriv-api/dist/DerivAPI');
 
-let appId = 33235
-
-const faunaSecret = "fnAE2ADNwvAATFvsToaIMbA5It5zDEQVwhnHq2dg"
+let appId = process.env.DERIV_APP_ID
+const adminAPIKey = process.env.ADMIN_API_KEY
+const faunaSecret = process.env.FAUNA_SECRET
+const paymentagent_loginid = process.env.DERIV_PAYMENTAGENT_LOGINID
 
 const dbClient = new f.Client({secret: faunaSecret})
 
@@ -22,7 +23,7 @@ const stockAllStatusIndex = f.Index("stockAllStatusIndex")
 const stockStatusIndex = f.Index("statusStockIndex")
 
 
-const paymentagent_loginid = 'CR831650'
+
 
 const app = express();
 
@@ -208,8 +209,8 @@ function withDerivAuth(req, res, callback) {
 }
 
 function withAdminAuth(req, res, callback) {
-  let expectedKey = 'dev-api-key'
-  if (req.headers && req.headers['x-api-key'] && req.headers['x-api-key'] !== expectedKey) {
+  
+  if (req.headers && req.headers['x-api-key'] && req.headers['x-api-key'] !== adminAPIKey) {
     res.jsonp({
         error: 'Incorrect admin token passed' + req.headers['x-api-key']
     })
