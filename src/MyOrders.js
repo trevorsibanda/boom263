@@ -45,9 +45,9 @@ export default function MyOrders(props) {
               </p>
 
               <ul className="list-unstyled">
-                {orders.forEach(order => 
-                      <li><i className="vi bi-chevron-right"></i><Link to={"/order/" + order._id}>{order_status[order.status]} {order.package._name} for USD${order.package_.amount} <br />ID: {order._id}</Link></li>
-                )}
+                    {orders.map(order => {
+                      return (<li><i className="vi bi-chevron-right"></i><Link to={"/order/" + order._id}>{order_status[order.status]} {order.package._name} for USD${order.package_.amount} <br />ID: {order._id}</Link></li>)
+                    })}
                     
                 
               </ul>
