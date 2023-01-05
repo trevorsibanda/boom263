@@ -25,7 +25,7 @@ export default function Navbar(props) {
           </li>
           <li><Link className="nav-link scrollto" to="/about">Help</Link></li>
         </ul>
-        <i className="bi bi-list mobile-nav-toggle"></i>
+        <i className="d-none bi bi-list mobile-nav-toggle"></i>
       </nav>
     </div>
   </header>
