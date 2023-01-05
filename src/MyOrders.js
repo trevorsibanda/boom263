@@ -7,21 +7,24 @@ import Loader from "./Loader"
 
 export default function MyOrders(props) {
 
-  let [loading, setLoading] = useState(false)
+  let [loading, setLoading] = useState(true)
   let [orders, setOrders] = useState([])
 
 
   useEffect(() => {
-    setLoading(true)
 
     config.pastOrders().then(orders_ => {
+      if (orders_.length === 0) {
+        alert('Load orders', 'You have no past orders')
+        setLoading(false)
+      }
       setOrders(orders_)
       setLoading(false)
     }).catch(err => {
       alert('Load orders', 'Failed to load your orders with error: ' + JSON.stringify(err))
       setLoading(false)
     })
-  }, [setLoading, loading, setOrders, orders])
+  }, [loading, setLoading, setOrders, orders])
 
   let order_status = {
     "cancelled": <span className="text-danger"><b>CANCELLED</b></span>,
@@ -46,7 +49,7 @@ export default function MyOrders(props) {
 
               <ul className="list-unstyled">
                     {orders.map(order => {
-                      return (<li><i className="vi bi-chevron-right"></i><Link to={"/order/" + order._id}>{order_status[order.status]} {order.package._name} for USD${order.package_.amount} <br />ID: {order._id}</Link></li>)
+                      return (<li><i className="vi bi-chevron-right"></i><Link to={"/order/" + order._id}>{order_status[order.status]} {order.package_.name} for USD${order.package_.amount} <br />ID: {order._id}</Link></li>)
                     })}
                     
                 
