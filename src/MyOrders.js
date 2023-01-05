@@ -12,7 +12,10 @@ export default function MyOrders(props) {
 
 
   useEffect(() => {
+    load()
+  }, [])
 
+  let load = () => {
     config.pastOrders().then(orders_ => {
       if (orders_.length === 0) {
         alert('Load orders', 'You have no past orders')
@@ -24,7 +27,7 @@ export default function MyOrders(props) {
       alert('Load orders', 'Failed to load your orders with error: ' + JSON.stringify(err))
       setLoading(false)
     })
-  }, [loading, setLoading, setOrders, orders])
+  }
 
   let order_status = {
     "cancelled": <span className="text-danger"><b>CANCELLED</b></span>,

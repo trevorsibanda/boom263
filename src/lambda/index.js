@@ -37,9 +37,11 @@ function createNewOrder(user, data) {
     data: {
       "_id": "",
       "package_": data.package_,
-      "name": data.name,
-      "cr": data.cr,
+      "name": user.fullname,
+      "cr": user.loginid,
       "email": user.email,
+      "country": user.country,
+      
       "purchaser": user,
       "price":  pkg_price( data.price * data.quantity),
       "quantity": data.quantity,
