@@ -353,7 +353,7 @@ router.post('/admin_stock', (req, res) => withAdminAuth(req, res, (req, res) => 
 }))
 
 router.post('/admin_save_stock', (req, res) => withAdminAuth(req, res, (req, res) => {
-  return saveStock(req.body).then(stock => {
+  return saveStock(req.body.stock).then(stock => {
     res.jsonp(stock)
   }).catch(err => {
     res.jsonp({

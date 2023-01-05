@@ -110,7 +110,7 @@ function AddStock() {
                 alert('Failed to save stock', res.error, 'error')
                 return
             }
-            alert('Stock saved successfully', 'Stock saved successfully', 'success')
+            alert('Stock saved successfully', 'Stock saved successfully, reload stock to see new entries', 'success')
         }).catch(err => {
             alert('Save stock', 'Failed to save stock, see log for error', 'error')
             console.log(err)
