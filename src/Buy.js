@@ -33,7 +33,10 @@ function Buy(props) {
             setRedirectToOrder(true)
             return
         }
+
         setPackage_(package__)
+
+        setLoading(false)
     }
 
     let checkLogin = () => {
@@ -70,7 +73,6 @@ function Buy(props) {
     useEffect(() => {
         checkLogin()
         loadPkg()
-        setLoading(false)
         })
 
     let component = (
