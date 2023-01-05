@@ -144,6 +144,9 @@ function saveStock(stock_list) {
     return {
         "package_": stock.package_.id,
         "token": stock.pin,
+        "created": f.Now(),
+      "amount": stock.package_.amount,
+        
         "ussd": make_token_ussd(stock.package_, stock.pin),
         "pretty": make_pretty_token(stock.pin),
         "image": "/public/images/" + stock.package_.id + ".png",

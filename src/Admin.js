@@ -241,7 +241,7 @@ function ListStock() {
          <td>{s.pretty}</td>
          <td>{s.ussd}</td>
          <td>{s.ocr}</td>
-         <td>{s.created["@ts"]}</td>
+         <td>{s.created ?  s.created["@ts"] : "N/A"}</td>
          <td>show-image-here</td>
         <td><a href="/#"><i class="fa bi-times text-danger"></i> Delete</a></td>
       </tr>
