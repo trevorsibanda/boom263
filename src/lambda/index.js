@@ -41,7 +41,7 @@ function createNewOrder(user, data) {
       "cr": user.loginid,
       "email": user.email,
       "country": user.country,
-      
+
       "purchaser": user,
       "price":  pkg_price( data.price * data.quantity),
       "quantity": data.quantity,
@@ -78,8 +78,7 @@ function setOrderPaid(order, stock, amount) {
 
 
 function listAllUserOrders(cr) {
-  let query = f.Select(["data"], f.Paginate(f.Match(userOrdersIdx, cr), { size: 1024 }))
-  return dbClient.query(query)
+  return dbClient.query( f.Map(f.Paginate(f.Match(userOrdersIdx, cr), { size: 1024 }), f.Lambda("v", f.Select("data", f.Get(f.Var("v"))))))
 }
 
 function listAllOrders(filter) {
