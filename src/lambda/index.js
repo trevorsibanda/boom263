@@ -122,7 +122,7 @@ function addStock(package_, token, image) {
         "ussd": make_token_ussd(token, ""),
         "pretty": token,
         "image": image,
-        "status": "ready"
+        "status": "free"
     }
     return dbClient.query(f.Create(stockCollection, document))
 }
@@ -150,7 +150,7 @@ function saveStock(stock_list) {
         "ussd": make_token_ussd(stock.package_, stock.pin),
         "pretty": make_pretty_token(stock.pin),
         "image": "/public/images/" + stock.package_.id + ".png",
-        "status": "ready"
+        "status": "free"
     }
   })
   return dbClient.query(f.Foreach(stock_items, f.Lambda("stock",  f.Create(stockCollection, {data: f.Var("stock")}))))
