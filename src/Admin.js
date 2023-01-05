@@ -89,6 +89,96 @@ function ListOrders(props) {
                     </div>
     )
 }
+function AddStock() {
+    let [stock, setStock] = useState([{
+        package_: config.packages[0],
+        pin: ""
+    }])
+    
+    let addNewStock = () => {
+        stock.push({
+            package_: config.packages[0],
+            pin: ""
+        })
+        let nstock = [...stock]
+        setStock(nstock)
+    }
+
+    let saveStock = () => {
+        config.admin.saveStock(stock).then(res => {
+            if (res.error) {
+                alert('Failed to save stock', res.error, 'error')
+                return
+            }
+            alert('Stock saved successfully', 'Stock saved successfully', 'success')
+        }).catch(err => {
+            alert('Save stock', 'Failed to save stock, see log for error', 'error')
+            console.log(err)
+        })
+    }
+
+    let removeStock = (index) => {
+        stock.splice(index, 1)
+        let nstock = [...stock]
+        setStock(nstock)
+    }
+
+    let updateStockPackage = (evt, index) => {
+        stock[index].package_ = evt.target.value
+        let nstock = [...stock]
+        setStock(nstock)
+    }
+
+    let updateStockPin = (evt, index) => {
+        stock[index].pin = evt.target.value
+        let nstock = [...stock]
+        setStock(nstock)
+    }
+
+    
+
+    return (
+        <div className="row" data-aos="fade-up" data-aos-delay="100">
+            <div className="block-pricing">
+                <div className="pricing-table">
+                    <h4>Add new stock</h4>
+                </div>
+                {stock.map((stock_, index) => {
+                    return <div className="row">
+                        <div className="col-md-4 col-sm-6 col-xs-6">
+                            <div className="form-group">
+                                <label>Package</label>
+                                <select className="form-control" value={stock.package_} onChange={evt => updateStockPackage(evt, index)}>
+                                    {
+                                        config.packages.map((package_, cindex) => {
+                                            return <option value={package_.id} tabIndex={index * 10 + cindex}>{package_.name}</option>
+                                        }
+                                        )
+                                    }
+                                </select>
+                            </div>
+                        </div>
+                        <div className="col-md-6 col-sm-6 col-xs-6">
+                            <div className="form-group">
+                                <label>Recharge PIN</label>
+                                <input type="text" className="form-control" value={stock_.pin} onChange={evt => updateStockPin(evt, index)} />
+                            </div>
+                        </div>
+                        <div className="col-md-2">
+                            <div className="form-group">
+                                <button className="btn" onClick={addNewStock}><i className="bi bi-plus text-primary"></i></button>
+                                <button className="btn " onClick={() => removeStock(index)}><i className="bi bi-trash text-danger"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                })}
+                <div className="table_btn">
+                    <button onClick={saveStock} disabled={false} className="btn btn-success"><i className="bi bi-cart"></i> Save new stock</button>
+                </div>
+            </div>
+        </div>)
+ } 
+
 
 function ListStock() {
 
@@ -110,18 +200,12 @@ function ListStock() {
         })
     }
 
-    let addNewStock = () => {
-        alert("Adding new stock")
-    }
-
     return (
         <div className="row" data-aos="fade-up" data-aos-delay="100">
                         <div className="block-pricing">
                             <div className="pricing-table">
                                 <h4>Manage Stock</h4>
-                                <div className="table_btn">
-                                    <button onClick={addNewStock} disabled={false} className="btn btn-success"><i className="bi bi-cart"></i> Add new stock</button>
-                                </div>
+                                
                                 <div>
                                     <div className="form-control">
                                         <select value={filter} onChange={evt => applyStocksFilter(evt.target.value)} className="form-control">
@@ -159,7 +243,7 @@ function ListStock() {
          <td>{s.ocr}</td>
          <td>{s.created["@ts"]}</td>
          <td>show-image-here</td>
-        <td><a href="/#"><i class="fa fa-times text-danger"></i> Delete</a></td>
+        <td><a href="/#"><i class="fa bi-times text-danger"></i> Delete</a></td>
       </tr>
         })}
       
@@ -172,6 +256,9 @@ function ListStock() {
                     </div>
     )
 }
+
+
+
 
 export default function Admin(props) {
 
@@ -211,6 +298,7 @@ export default function Admin(props) {
                     </div>
                     <ListStock />
                     <ListOrders />
+                    <AddStock />
                 </div>
 
             </section>

@@ -124,6 +124,10 @@ function filterOrders(filter) {
     return api_post("admin_orders", {filter})
 }
 
+function saveStock(stock) {
+    return api_post("admin_save_stock", {stock})
+}
+
 function adminReport(report) {
     return api_post("admin_report", {report})
 }
@@ -136,9 +140,6 @@ function filterStock(filter) {
     return api_post("admin_stock", {filter})
 }
 
-function addStock(stock, image) {
-    return api_post("admin_add_stock", {stock, image})
-}
 
 function removeStock(_id) {
     return api_post("admin_remove_stock", {_id})
@@ -162,7 +163,7 @@ const config = {
     admin: {
         filterOrders,
         filterStock,
-        addStock,
+        saveStock,
         removeStock,
         editStock,
         stockReport,

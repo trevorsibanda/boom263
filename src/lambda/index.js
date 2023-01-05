@@ -115,7 +115,7 @@ function make_token_ussd(package_, token) {
   return code + token + "#"
 }
 
-function addNewStock(package_, token, image) {
+function addStock(package_, token, image) {
     var document = {
         "package_": package_,
         "token": token,
@@ -125,6 +125,32 @@ function addNewStock(package_, token, image) {
         "status": "ready"
     }
     return dbClient.query(f.Create(stockCollection, document))
+}
+
+//make_pretty_token shows a string with spaces after every 4 characters
+function make_pretty_token(token) {
+  let pretty = ""
+  for (let i = 0; i < token.length; i++) {
+    pretty += token[i]
+    if ((i + 1) % 4 === 0) {
+      pretty += " "
+    }
+  }
+  return pretty
+}
+
+function saveStock(stock_list) {
+  let stock_items = stock_list.map(stock => {
+    return {
+        "package_": stock.package_.id,
+        "token": stock.pin,
+        "ussd": make_token_ussd(stock.package_, stock.pin),
+        "pretty": make_pretty_token(stock.pin),
+        "image": "/public/images/" + stock.package_.id + ".png",
+        "status": "ready"
+    }
+  })
+  return dbClient.query(f.Foreach(stock_items, f.Lambda("stock",  f.Create(stockCollection, {data: f.Var("stock")}))))
 }
 
 function retrieveOrder(order_id) {
@@ -324,6 +350,18 @@ router.post('/admin_stock', (req, res) => withAdminAuth(req, res, (req, res) => 
       reason: JSON.stringify(err)
     })
   })
+}))
+
+router.post('/admin_save_stock', (req, res) => withAdminAuth(req, res, (req, res) => {
+  return saveStock(req.body).then(stock => {
+    res.jsonp(stock)
+  }).catch(err => {
+    res.jsonp({
+      error: 'Failed to save stock',
+      reason: JSON.stringify(err)
+    })
+  })
+
 }))
 
 router.post('/admin_orders', (req, res) => withAdminAuth(req, res, (req, res) => {
