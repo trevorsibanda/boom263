@@ -78,7 +78,7 @@ function setOrderPaid(order, stock, amount) {
 
 
 function listAllUserOrders(cr) {
-  return dbClient.query( f.Map(f.Paginate(f.Match(userOrdersIdx, cr), { size: 1024 }), f.Lambda("v", f.Select("data", f.Get(f.Var("v"))))))
+  return dbClient.query( f.Select(["data"], f.Map(f.Paginate(f.Match(userOrdersIdx, cr), { size: 1024 }), f.Lambda("v", f.Select("data", f.Get(f.Var("v")))))))
 }
 
 function listAllOrders(filter) {
