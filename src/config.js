@@ -149,6 +149,9 @@ function editStock(_id, stock) {
     return api_post("admin_edit_stock", {_id, stock})
 }
 
+function checkLoggedInRemote() {
+    return api_post("check_logged_in", {})
+}
 
 function ordersReport() {
     return adminReport("orders")
@@ -181,6 +184,7 @@ const config = {
     fetchOrder,
     currentOrder,
     saveCurrentOrder,
+    checkLoggedInRemote,
     createNewOrder,
     checkLoggedIn,
     verifyAndPay,
