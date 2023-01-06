@@ -44,7 +44,7 @@ function slack_msg(channel, text) {
   return slackClient.chat.postMessage({
     channel: channel,
     text: text
-  })
+  }).catch(console.log)
 }
 
 function slack_user_msg(user, channel, text) {
