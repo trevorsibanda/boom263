@@ -44,12 +44,12 @@ async function slack_msg(channel, text) {
   return await slackClient.chat.postMessage({
     channel: channel,
     text: text
-  }).catch(console.log)
+  }).catch(console.log).then(console.log)
 }
 
 async function slack_user_msg(user, channel, text) {
   let userMsg = `<@${user.fullname} :: ${user.loginid} :: ${user.email}> ${text}`
-  return slack_msg(channel, userMsg)
+  return await slack_msg(channel, userMsg)
 }
 
 function createNewOrder(user, data) {
@@ -74,10 +74,11 @@ function createNewOrder(user, data) {
   }
 
   return dbClient.query(f.Create(ordersCollection, document)).then(doc => {
-    let data = doc.data
-    data._id = doc.ref.id
-    slack_user_msg(user, salesChannel, `New order: ${data.package_} x ${data.quantity} for ${data.price} = ${data.amount}`)
-    return data
+    let ddata = doc.data
+    ddata._id = doc.ref.id
+    let now = new Date().toISOString()
+    slack_user_msg(user, salesChannel, `New order: ${data.package_.name} x ${data.quantity} for ${data.price} @ ` + now)
+    return ddata
   })
 }
 
@@ -334,10 +335,11 @@ router.post('/verify_order', (req, res) => withDerivAuth(req, res, (req, res, de
     return checkStockExists(order.package_.id).then(count => {
       console.log("Stock count for " + order.package_.id + " is " + count)
       if (count === 0) {
+        
+        slack_user_msg(req.user, salesChannel, "Failed to verify order for " + order.package_.name + " because we are out of stock")
         res.jsonp({ 
           error: 'Sorry selected item is now out of stock'
         })
-        slack_user_msg(req.user, salesChannel, "Failed to verify order for " + order.package_.name + " because we are out of stock")
         return Promise.resolve()
       } else {
         if (count < 10) {
@@ -364,28 +366,31 @@ router.post('/verify_order', (req, res) => withDerivAuth(req, res, (req, res, de
               res.jsonp(document.data)
             }).catch(err => {
               console.log("Fatal error, failed to update order after paid " + order._id)
+              
+              slack_msg(salesChannel, "SETOrderPaid ::: Failed to update order after paid " + order._id + " with error: " + err)
+              slack_msg(salesChannel, "CRITICAL: Contact buyer and find way to resolve issue " + JSON.stringify(stock) + "\n" + JSON.stringify(order))
               res.jsonp({
                 error: 'Your order failed at the end, but your recharge pin is ' + stock.data.code,
                 reason: stock.data
               })
-              slack_msg(salesChannel, "SETOrderPaid ::: Failed to update order after paid " + order._id + " with error: " + err)
-              slack_msg(salesChannel, "CRITICAL: Contact buyer and find way to resolve issue " + JSON.stringify(stock) + "\n" + JSON.stringify(order))
             })
           }).catch(err => {
+            
+            slack_msg(salesChannel, "Failed to pop stock from list for order " + order._id + " with error: " + err)
+            slack_msg(salesChannel, "CRITICAL: Contact buyer and find way to resolve issue as payment went through " + JSON.stringify(order))
             res.jsonp({
               error: 'Failed to pop stock from list',
               reason: err
             })
-            slack_msg(salesChannel, "Failed to pop stock from list for order " + order._id + " with error: " + err)
-            slack_msg(salesChannel, "CRITICAL: Contact buyer and find way to resolve issue as payment went through " + JSON.stringify(order))
           }) 
         }).catch(err => {
           if (err.error && err.error.code) {
+            
+            slack_user_msg(req.user, salesChannel, "Failed to verify order for " + order.package_.name + " because of error: " + err.error.code + " - " + err.error.message)
             res.jsonp({
               error: 'Failed to withdraw funds from your Deriv account: ' + err.error.code,
               reason: err.error.message
             })
-            slack_user_msg(req.user, salesChannel, "Failed to verify order for " + order.package_.name + " because of error: " + err.error.code + " - " + err.error.message)
             return Promise.resolve()
           }
 
@@ -422,8 +427,8 @@ router.post('/my_orders', (req, res) => withDerivAuth(req, res, (req, res, deriv
 
 router.post('/check_logged_in', (req, res) => withDerivAuth(req, res, (req, res, derivBasicAPI) => {
   //check if user exists
-  return checkUserExists(req.user.email).then(user => {
-    if (user) {
+  return checkUserExists(req.user.loginid).then(count => {
+    if (count >= 1) {
       slack_user_msg(req.user, signupsChannel, "User logged in or active session")
     } else {
       slack_user_msg(req.user, signupsChannel, "New user logged in" + JSON.stringify(req.user))
