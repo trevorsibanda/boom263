@@ -3,3 +3,4 @@ built-lambda
 # Local Netlify folder
 .netlify
 .vscode
+prod.env

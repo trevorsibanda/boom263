@@ -40,14 +40,14 @@ function pkg_price(a) {
   return a.toFixed(2) * 1.1
 }
 
-function slack_msg(channel, text) {
-  return slackClient.chat.postMessage({
+async function slack_msg(channel, text) {
+  return await slackClient.chat.postMessage({
     channel: channel,
     text: text
   }).catch(console.log)
 }
 
-function slack_user_msg(user, channel, text) {
+async function slack_user_msg(user, channel, text) {
   let userMsg = `<@${user.fullname} :: ${user.loginid} :: ${user.email}> ${text}`
   return slack_msg(channel, userMsg)
 }
@@ -219,7 +219,7 @@ function paymentAgentDoWithdraw(derivBasicAPI, order, verification_code, dry_run
   let currency = 'USD'
   let data = {amount: pkg_price(order.package_.amount), currency, description, dry_run, paymentagent_withdraw: 1, paymentagent_loginid, verification_code}
   console.log("Payment agent processing withdrawal", data)
-  return derivBasicAPI.paymentagentWithdraw(data).catch(console.log)
+  return derivBasicAPI.paymentagentWithdraw(data)
 }
 
 function paymentAgentInitWithdraw(derivBasicAPI, id, email) {
@@ -345,13 +345,14 @@ router.post('/verify_order', (req, res) => withDerivAuth(req, res, (req, res, de
         }
 
         return paymentAgentDoWithdraw(derivBasicAPI, order, req.body.verification_code, dry_run).then(resp => {
-          if (resp.error && resp.error.code) {
+
+          if (resp && resp.error && resp.error.code) {
             res.jsonp({
               error: 'Failed to withdraw funds from your Deriv account: ' + resp.error.code,
               reason: resp.error.message
             })
             return Promise.resolve()
-          }
+          } 
           slack_msg(salesChannel, "Withdrawal request for " + order._id + " success. " + JSON.stringify(resp))
           console.log("Withdrawal request for ", + order._id + " success")
           //get one stock item from list
@@ -370,16 +371,28 @@ router.post('/verify_order', (req, res) => withDerivAuth(req, res, (req, res, de
               slack_msg(salesChannel, "SETOrderPaid ::: Failed to update order after paid " + order._id + " with error: " + err)
               slack_msg(salesChannel, "CRITICAL: Contact buyer and find way to resolve issue " + JSON.stringify(stock) + "\n" + JSON.stringify(order))
             })
-          }).catch(console.log) 
+          }).catch(err => {
+            res.jsonp({
+              error: 'Failed to pop stock from list',
+              reason: err
+            })
+            slack_msg(salesChannel, "Failed to pop stock from list for order " + order._id + " with error: " + err)
+            slack_msg(salesChannel, "CRITICAL: Contact buyer and find way to resolve issue as payment went through " + JSON.stringify(order))
+          }) 
         }).catch(err => {
-          console.log("Failed to process withdrawal request for order " + order._id + "with error: "+ err)
+          if (err.error && err.error.code) {
+            res.jsonp({
+              error: 'Failed to withdraw funds from your Deriv account: ' + err.error.code,
+              reason: err.error.message
+            })
+            slack_user_msg(req.user, salesChannel, "Failed to verify order for " + order.package_.name + " because of error: " + err.error.code + " - " + err.error.message)
+            return Promise.resolve()
+          }
+
           res.jsonp({
-            error: 'Failed to process withdrawal request. Someone will contact you ASAP',
-            reason: err
+            error: 'Failed to process withdrawal request. ',
+            reason: (err && err.error && err.error.message ? err.error.message : 'Something went wrong')
           })
-          slack_msg(salesChannel, "POPSTOCK ::: Failed to update order after paid " + order._id + " with error: " + err)
-          slack_msg(salesChannel, "CRITICAL: Contact buyer and find way to resolve issue " + JSON.stringify(stock) + "\n" + JSON.stringify(order))
-            
         })
       }
     }).catch(err => {
