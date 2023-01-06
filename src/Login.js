@@ -24,7 +24,7 @@ export default function Login() {
       config.storeDerivToken(params.cur5, params.acct5, params.token5)
     } else if (params && params.acct6 && params.token6 && params.cur6 && params.cur6.toLowerCase() === "usd") {
       config.storeDerivToken(params.cur6, params.acct6, params.token6)
-    } else {
+    } else if(params && (params.acct1 || params.acct2 || params.acct3 || params.acct4 || params.acct5 || params.acct6 )) {
       config.clearDerivToken()
       alert("Invalid login parameters", "Please login again or choose a different account, we failed to find a USD account to use", "error")
     }
@@ -46,7 +46,7 @@ export default function Login() {
           setWorking(false)
         }
       }).catch(console.log)
-      
+
     } else {
       setTimeout(_ => {
         setLoggedIn(false)
