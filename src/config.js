@@ -108,6 +108,10 @@ function checkLoggedIn() {
     return derivAuthToken() !== null
 }
 
+function clearDerivToken() {
+    reactLocalStorage.remove('deriv')
+}
+
 function setPostLogin(uri) {
     reactLocalStorage.set('post_login', uri)
 }
@@ -192,6 +196,7 @@ const config = {
     derivLoginURL,
     getPackage,
     checkDerivToken,
+    clearDerivToken,
     storeDerivToken,
     setPostLogin,
     postLogin,
