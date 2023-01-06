@@ -82,9 +82,13 @@ function createNewOrder(user, data) {
 }
 
 function checkStockExists(package_) {
-    let query = f.Count(f.Match(stockPackageSearchIndex, package_)) //Map(Paginate(Match(Index("stockIndex"), "econet_usd1")), Lambda("v", Select("data", Get(Var("v")))))
-  return dbClient.query(query)
-    
+  let query = f.Count(f.Match(stockPackageSearchIndex, package_)) //Map(Paginate(Match(Index("stockIndex"), "econet_usd1")), Lambda("v", Select("data", Get(Var("v")))))
+  return dbClient.query(query).then(count => {
+    if (count <= 0) {
+      slack_msg(stockChannel, 'Out of stock for ' + package_)
+    }
+    return count
+  })
 }
 
 function popStock(package_) {
@@ -277,7 +281,6 @@ router.post('/new_order', (req, res) => withDerivAuth(req, res, (req, res, deriv
   return checkStockExists(body.package_.id).then(count => {
     if (count === 0) {
       slack_user_msg(req.user, salesChannel, "Failed to create order for " + body.package_.name + " because we are out of stock")
-      slack_msg(stockChannel, 'Out of stock for ' + body.package_.name)
       res.jsonp({
         error: 'Sorry, we are now out of stock for ' + body.package_.name
       })
@@ -334,8 +337,7 @@ router.post('/verify_order', (req, res) => withDerivAuth(req, res, (req, res, de
         res.jsonp({ 
           error: 'Sorry selected item is now out of stock'
         })
-        slack_user_msg(req.user, salesChannel, "Failed to create order for " + order.package_.name + " because we are out of stock")
-        slack_msg(stockChannel, 'Out of stock for ' + order.package_.name)
+        slack_user_msg(req.user, salesChannel, "Failed to verify order for " + order.package_.name + " because we are out of stock")
         return Promise.resolve()
       } else {
         if (count < 10) {
@@ -357,6 +359,7 @@ router.post('/verify_order', (req, res) => withDerivAuth(req, res, (req, res, de
             console.log('Popped stock for order ' + order._id + " - " + JSON.stringify(stock))
             return setOrderPaid(order, stock, pkg_price(order.package_.amount)).then(document => {
               console.log("Updated and set order " + order._id + " to paid")
+              slack_user_msg(req.user, salesChannel, "Order " +  order._id + " for " + order.package_.name + " is now paid. Recharge token is " + stock.pretty)
               res.jsonp(document.data)
             }).catch(err => {
               console.log("Fatal error, failed to update order after paid " + order._id)
@@ -364,14 +367,19 @@ router.post('/verify_order', (req, res) => withDerivAuth(req, res, (req, res, de
                 error: 'Your order failed at the end, but your recharge pin is ' + stock.data.code,
                 reason: stock.data
               })
+              slack_msg(salesChannel, "SETOrderPaid ::: Failed to update order after paid " + order._id + " with error: " + err)
+              slack_msg(salesChannel, "CRITICAL: Contact buyer and find way to resolve issue " + JSON.stringify(stock) + "\n" + JSON.stringify(order))
             })
           }).catch(console.log) 
         }).catch(err => {
           console.log("Failed to process withdrawal request for order " + order._id + "with error: "+ err)
           res.jsonp({
-            error: 'Failed to process withdrawal request',
+            error: 'Failed to process withdrawal request. Someone will contact you ASAP',
             reason: err
           })
+          slack_msg(salesChannel, "POPSTOCK ::: Failed to update order after paid " + order._id + " with error: " + err)
+          slack_msg(salesChannel, "CRITICAL: Contact buyer and find way to resolve issue " + JSON.stringify(stock) + "\n" + JSON.stringify(order))
+            
         })
       }
     }).catch(err => {
