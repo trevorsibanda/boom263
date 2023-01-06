@@ -1,4 +1,5 @@
 const f = require('faunadb')
+const slack = require('@slack/web-api')
 const WebSocket = require('ws');
 const express = require('express');
 const path = require('path');
@@ -9,6 +10,11 @@ let appId = process.env.DERIV_APP_ID
 const adminAPIKey = process.env.ADMIN_API_KEY
 const faunaSecret = process.env.FAUNA_SECRET
 const paymentagent_loginid = process.env.DERIV_PAYMENTAGENT_LOGINID
+const slackToken = process.env.SLACK_TOKEN
+
+const salesChannel = process.env.SALES_CHANNEL
+const signupsChannel = process.env.SIGNUPS_CHANNEL
+const stockChannel = process.env.STOCK_CHANNEL
 
 const dbClient = new f.Client({secret: faunaSecret})
 
@@ -22,14 +28,28 @@ const stockPackageSearchIndex = f.Index("stockIndex")
 const stockAllStatusIndex = f.Index("stockAllStatusIndex")
 const stockStatusIndex = f.Index("statusStockIndex")
 
+const userLoginIdIndex = f.Index("userLoginIdIndex")
+const usersCollection = f.Collection("Users")
 
-
+const slackClient = new slack.WebClient(slackToken);
 
 const app = express();
 
 
 function pkg_price(a) {
   return a.toFixed(2) * 1.1
+}
+
+function slack_msg(channel, text) {
+  return slackClient.chat.postMessage({
+    channel: channel,
+    text: text
+  })
+}
+
+function slack_user_msg(user, channel, text) {
+  let userMsg = `<@${user.fullname} :: ${user.loginid} :: ${user.email}> ${text}`
+  return slack_msg(channel, userMsg)
 }
 
 function createNewOrder(user, data) {
@@ -56,6 +76,7 @@ function createNewOrder(user, data) {
   return dbClient.query(f.Create(ordersCollection, document)).then(doc => {
     let data = doc.data
     data._id = doc.ref.id
+    slack_user_msg(user, salesChannel, `New order: ${data.package_} x ${data.quantity} for ${data.price} = ${data.amount}`)
     return data
   })
 }
@@ -115,6 +136,21 @@ function listAllStock(filter) {
   return dbClient.query(query)
 }
 
+function checkUserExists(loginid) {
+  return dbClient.query(f.Count(f.Match(userLoginIdIndex, loginid)))
+}
+
+function createUser(user) {
+  var document = {
+    data: user
+  }
+  return dbClient.query(f.Create(usersCollection, document)).then(doc => {
+    let data = doc.data
+    data._id = doc.ref.id
+    return data
+  })
+}
+
 function make_token_ussd(package_, token) {
   let code = "*121*"
   if (package_ === "netone_mogigs") {
@@ -161,7 +197,9 @@ function saveStock(stock_list) {
         "status": "free"
     }
   })
-  return dbClient.query(f.Foreach(stock_items, f.Lambda("stock",  f.Create(stockCollection, {data: f.Var("stock")}))))
+  return dbClient.query(f.Foreach(stock_items, f.Lambda("stock", f.Create(stockCollection, { data: f.Var("stock") })))).then(res => {
+    return Promise.resolve(stock_list)
+  })
 }
 
 function retrieveOrder(order_id) {
@@ -238,6 +276,8 @@ router.post('/new_order', (req, res) => withDerivAuth(req, res, (req, res, deriv
   //check if stock exists first
   return checkStockExists(body.package_.id).then(count => {
     if (count === 0) {
+      slack_user_msg(req.user, salesChannel, "Failed to create order for " + body.package_.name + " because we are out of stock")
+      slack_msg(stockChannel, 'Out of stock for ' + body.package_.name)
       res.jsonp({
         error: 'Sorry, we are now out of stock for ' + body.package_.name
       })
@@ -294,7 +334,14 @@ router.post('/verify_order', (req, res) => withDerivAuth(req, res, (req, res, de
         res.jsonp({ 
           error: 'Sorry selected item is now out of stock'
         })
+        slack_user_msg(req.user, salesChannel, "Failed to create order for " + order.package_.name + " because we are out of stock")
+        slack_msg(stockChannel, 'Out of stock for ' + order.package_.name)
+        return Promise.resolve()
       } else {
+        if (count < 10) {
+          slack_msg(stockChannel, 'Low stock for ' + order.package_.name + " - " + count + " left")
+        }
+
         return paymentAgentDoWithdraw(derivBasicAPI, order, req.body.verification_code, dry_run).then(resp => {
           if (resp.error && resp.error.code) {
             res.jsonp({
@@ -303,6 +350,7 @@ router.post('/verify_order', (req, res) => withDerivAuth(req, res, (req, res, de
             })
             return Promise.resolve()
           }
+          slack_msg(salesChannel, "Withdrawal request for " + order._id + " success. " + JSON.stringify(resp))
           console.log("Withdrawal request for ", + order._id + " success")
           //get one stock item from list
           return popStock(order.package_.id).then(stock => {
@@ -351,6 +399,25 @@ router.post('/my_orders', (req, res) => withDerivAuth(req, res, (req, res, deriv
   })
 }))
 
+router.post('/check_logged_in', (req, res) => withDerivAuth(req, res, (req, res, derivBasicAPI) => {
+  //check if user exists
+  return checkUserExists(req.user.email).then(user => {
+    if (user) {
+      slack_user_msg(req.user, signupsChannel, "User logged in or active session")
+    } else {
+      slack_user_msg(req.user, signupsChannel, "New user logged in" + JSON.stringify(req.user))
+      createUser(req.user)
+    }
+    res.jsonp({ ok: true })
+  }).catch(err => {
+    res.jsonp({
+      error: 'Failed to check user',
+      reason: JSON.stringify(err)
+    })
+  })
+
+}))
+
 router.post('/admin_stock', (req, res) => withAdminAuth(req, res, (req, res) => {
   
   return listAllStock(req.body.filter).then(stock => {
@@ -365,6 +432,8 @@ router.post('/admin_stock', (req, res) => withAdminAuth(req, res, (req, res) => 
 
 router.post('/admin_save_stock', (req, res) => withAdminAuth(req, res, (req, res) => {
   return saveStock(req.body.stock).then(stock => {
+    let stocksMsg = stock.map(s => 'PKG: '+ s.package_ + ' - ' + s.pretty).join('\n')
+    slack_msg(stockChannel, 'NEW stock added: ' + stocksMsg )
     res.jsonp(stock)
   }).catch(err => {
     res.jsonp({
