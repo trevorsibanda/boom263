@@ -1,11 +1,12 @@
-## Create-React-App-Lambda
+## Boom263
 
-This project is a reference demo showing you how to use [Create React App v3](https://github.com/facebookincubator/create-react-app) and [netlify-lambda v1](https://github.com/netlify/netlify-lambda) together in a [Netlify Dev](https://www.netlify.com/docs/cli/?utm_source=github&utm_medium=swyx-CRAL&utm_campaign=devex#netlify-dev-beta) workflow. You can clone this and immediately be productive with a React app with serverless Netlify Functions in the same repo. Alternatively you can deploy straight to Netlify with this one-click Deploy:
+Built from create-react-app-lambda and deployed to Netlify.
 
+A React powered E-Commerce site for Boom263, a small business selling airtime, data bundles and electricity tokens using Deriv balances.
 
-[![Deploy to Netlify](https://www.netlify.com/img/deploy/button.svg?utm_source=github&utm_medium=swyx-CRAL&utm_campaign=devex)](https://app.netlify.com/start/deploy?repository=https://github.com/netlify/create-react-app-lambda&utm_source=github&utm_medium=swyx-CRAL&utm_campaign=devex)
+A user can buy airtime, data bundles and electricity tokens using their Deriv balance. In future, they can also top up their Deriv balance using several payment methods.
 
-> ⚠️NOTE: You may not need this project at all. [Netlify Dev](https://github.com/netlify/netlify-dev-plugin) works with `create-react-app` out of the box! Only use `netlify-lambda` if you need a build step for your functions, eg if you want to use Babel or TypeScript ([see its README for details](https://github.com/netlify/netlify-lambda/blob/master/README.md#netlify-lambda)).
+Payment is in the form of a Deriv payment agent withdrawal. An email is sent to the user with a link to the payment agent withdrawal page. The user can then complete the withdrawal and the payment is made. The user is then shown their voucher code.
 
 ## Project Setup
 
@@ -15,20 +16,12 @@ This project is a reference demo showing you how to use [Create React App v3](ht
 
 As an example, we've included a small `src/lambda/hello.js` function, which will be deployed to `/.netlify/functions/hello`. We've also included an async lambda example using async/await syntax in `async-dadjoke.js`.
 
-## Video
-
-Learn how to set this up yourself (and why everything is the way it is) from scratch in a video: https://www.youtube.com/watch?v=3ldSM98nCHI
-
-## Babel/webpack compilation
-
-All functions (inside `src/lambda`) are compiled with webpack using Babel, so you can use modern JavaScript, import npm modules, etc., without any extra setup.
-
 ## Local Development
 
 ```bash
 ## prep steps for first time users
 npm i -g netlify-cli # Make sure you have the [Netlify CLI](https://github.com/netlify/cli) installed
-git clone https://github.com/netlify/create-react-app-lambda ## clone this repo
+git clone https://github.com/trevorsibanda/boom263 ## clone this repo
 cd create-react-app-lambda ## change into this repo
 yarn # install all dependencies
 
@@ -45,7 +38,7 @@ You can view the project locally via Netlify Dev, via `localhost:8888`.
 
 Each function will be available at the same port as well:
 
-- `http://localhost:8888/.netlify/functions/hello` and 
+- `http://localhost:8888/.netlify/functions/hello` and
 - `http://localhost:8888/.netlify/functions/async-dadjoke`
 
 ## Deployment
@@ -68,27 +61,31 @@ You can use Typescript in both your frontend React code (with `react-scripts` v2
 3. use types in your event handler:
 
 ```ts
-import { Handler, Context, Callback, APIGatewayEvent } from 'aws-lambda'
+import { Handler, Context, Callback, APIGatewayEvent } from "aws-lambda";
 
 interface HelloResponse {
-  statusCode: number
-  body: string
+  statusCode: number;
+  body: string;
 }
 
-const handler: Handler = (event: APIGatewayEvent, context: Context, callback: Callback) => {
-  const params = event.queryStringParameters
+const handler: Handler = (
+  event: APIGatewayEvent,
+  context: Context,
+  callback: Callback
+) => {
+  const params = event.queryStringParameters;
   const response: HelloResponse = {
     statusCode: 200,
     body: JSON.stringify({
       msg: `Hello world ${Math.floor(Math.random() * 10)}`,
       params,
     }),
-  }
+  };
 
-  callback(undefined, response)
-}
+  callback(undefined, response);
+};
 
-export { handler }
+export { handler };
 ```
 
 rerun and see it work!
