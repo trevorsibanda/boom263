@@ -178,7 +178,7 @@ function addStock(package_, token, image) {
     var document = {
         "package_": package_,
         "token": token,
-        "ussd": make_token_ussd(token, ""),
+        "ussd": make_token_ussd(package_.id, token),
         "pretty": token,
         "image": image,
         "status": "free"
@@ -206,7 +206,7 @@ function saveStock(stock_list) {
         "created": f.Now(),
       "amount": stock.package_.amount,
         
-        "ussd": make_token_ussd(stock.package_, stock.pin),
+        "ussd": make_token_ussd(stock.package_.id, stock.pin),
         "pretty": make_pretty_token(stock.pin),
         "image": "/public/images/" + stock.package_.id + ".png",
         "status": "free"
