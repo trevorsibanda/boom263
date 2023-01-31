@@ -15,6 +15,7 @@ const slackToken = process.env.SLACK_TOKEN
 const salesChannel = process.env.SALES_CHANNEL
 const signupsChannel = process.env.SIGNUPS_CHANNEL
 const stockChannel = process.env.STOCK_CHANNEL
+const activityChannel = process.env.ACTIVITY_CHANNEL
 
 const dbClient = new f.Client({secret: faunaSecret})
 
@@ -50,6 +51,15 @@ async function slack_msg(channel, text) {
 async function slack_user_msg(user, channel, text) {
   let userMsg = `<@${user.fullname} :: ${user.loginid} :: ${user.email}> ${text}`
   return await slack_msg(channel, userMsg)
+}
+
+async function slack_activity(text) {
+  return await slack_msg(activityChannel, text)
+}
+
+async function slack_activity_user(user, text) {
+  let userMsg = `<@${user.fullname} :: ${user.loginid} :: ${user.email}> ${text}`
+  return await slack_msg(activityChannel, userMsg)
 }
 
 function createNewOrder(user, data) {
@@ -264,6 +274,7 @@ function withAdminAuth(req, res, callback) {
 
     return callback(req, res)
   } else {
+    slack_activity("Failed to authenticate admin request " + JSON.stringify(req))
     res.jsonp({
         error: 'Incorrect admin token passed' + req.headers['x-api-key']
     })
@@ -318,9 +329,10 @@ router.post('/new_order', (req, res) => withDerivAuth(req, res, (req, res, deriv
 
 router.post('/fetch_order', (req, res) => {
   return retrieveOrder(req.body._id).then(document => {
-    console.log("Fetched order " + document)
+    slack_activity("Fetch order " + req.body._id)
     res.jsonp(document)
   }).catch(err => {
+
           res.json({
             error: "Failed to retrieve order",
             reason: JSON.stringify(err),
@@ -418,6 +430,7 @@ router.post('/verify_order', (req, res) => withDerivAuth(req, res, (req, res, de
 
 router.post('/my_orders', (req, res) => withDerivAuth(req, res, (req, res, derivBasicAPI) => {
   return listAllUserOrders(req.body.deriv.cr).then(orders => {
+    slack_activity_user(req.user, "Fetched and got " + orders.length + " orders")
     res.jsonp(orders)
   }).catch(err => {
     res.jsonp({
@@ -449,6 +462,7 @@ router.post('/check_logged_in', (req, res) => withDerivAuth(req, res, (req, res,
 router.post('/admin_stock', (req, res) => withAdminAuth(req, res, (req, res) => {
   
   return listAllStock(req.body.filter).then(stock => {
+    slack_activity('Admin loaded stock with filter ' + JSON.stringify(req.body.filter) + ' and got ' + stock.length + ' results')
     res.jsonp(stock)
   }).catch(err => {
     res.jsonp({
@@ -475,6 +489,7 @@ router.post('/admin_save_stock', (req, res) => withAdminAuth(req, res, (req, res
 router.post('/admin_orders', (req, res) => withAdminAuth(req, res, (req, res) => {
   
   return listAllOrders(req.body.filter).then(stock => {
+    slack_activity('Retrieved orders: ' + JSON.stringify(req.body.filter))
     res.jsonp(stock)
   }).catch(err => {
     res.jsonp({
