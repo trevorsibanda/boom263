@@ -4,3 +4,5 @@ built-lambda
 .netlify
 .vscode
 prod.env
+.DS_Store
+DS_Store
