@@ -41,6 +41,10 @@ function pkg_price(a) {
   return a.toFixed(2) * 1.1
 }
 
+function pkg_price_withdraw(a) {
+  return a.toFixed(2) * 1.04
+}
+
 async function slack_msg(channel, text) {
   return await slackClient.chat.postMessage({
     channel: channel,
@@ -228,7 +232,7 @@ function paymentAgentDoWithdraw(derivBasicAPI, order, verification_code, dry_run
   let id = "".replace("_", " ")
   let description = "Purchase " + id + " from Boom263"
   let currency = 'USD'
-  let data = {amount: pkg_price(order.package_.amount), currency, description, dry_run, paymentagent_withdraw: 1, paymentagent_loginid, verification_code}
+  let data = {amount: pkg_price_withdraw(order.package_.amount), currency, description, dry_run, paymentagent_withdraw: 1, paymentagent_loginid, verification_code}
   console.log("Payment agent processing withdrawal", data)
   return derivBasicAPI.paymentagentWithdraw(data)
 }
@@ -430,7 +434,8 @@ router.post('/verify_order', (req, res) => withDerivAuth(req, res, (req, res, de
 router.post('/my_orders', (req, res) => withDerivAuth(req, res, (req, res, derivBasicAPI) => {
   return listAllUserOrders(req.body.deriv.cr).then(orders => {
     slack_activity_user(req.user, "Fetched and got " + orders.length + " orders")
-    res.jsonp(orders)
+    let orders_ = orders || []
+    res.jsonp(orders_.reverse())
   }).catch(err => {
     res.jsonp({
       error: 'Failed to load orders',
@@ -462,7 +467,9 @@ router.post('/admin_stock', (req, res) => withAdminAuth(req, res, (req, res) => 
   
   return listAllStock(req.body.filter).then(stock => {
     slack_activity('Admin loaded stock with filter ' + JSON.stringify(req.body.filter) + ' and got ' + stock.length + ' results')
-    res.jsonp(stock)
+    let rstock = stock || []
+
+    res.jsonp(rstock.reverse())
   }).catch(err => {
     res.jsonp({
       error: 'Failed to load stock',
@@ -487,9 +494,10 @@ router.post('/admin_save_stock', (req, res) => withAdminAuth(req, res, (req, res
 
 router.post('/admin_orders', (req, res) => withAdminAuth(req, res, (req, res) => {
   
-  return listAllOrders(req.body.filter).then(stock => {
+  return listAllOrders(req.body.filter).then(orders => {
     slack_activity('Retrieved orders: ' + JSON.stringify(req.body.filter))
-    res.jsonp(stock)
+    let rorders = orders || []
+    res.jsonp(rorders.reverse())
   }).catch(err => {
     res.jsonp({
       error: 'Failed to load orders',
