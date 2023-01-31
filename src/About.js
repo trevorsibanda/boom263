@@ -17,17 +17,23 @@ export default function About(props) {
             <div className="about-content" data-aos="fade-left" data-aos-delay="100">
 
               <h2><span>Boom 263</span> </h2>
-              <p>Consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim
-                ad
-                minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat
+                  <p>
+                    Boom263 is an online platform that allows you to buy and sell airtime, data bundles, electricity tokens and do more.
+                    We support the following payment methods:
+                    <ul>
+                      <li>Deriv</li>
+                      <li>InnBucks <sup><b>Coming soon</b></sup></li>
+                    </ul>
+                    <br />
+                    For more information, please contact us by <a href="mailto:support@boom263.co.zw">Email or WhatsApp</a>
               </p>
 
               <ul className="list-unstyled">
-                <li><i className="vi bi-chevron-right"></i>Creative Design</li>
-                <li><i className="vi bi-chevron-right"></i>Retina Ready</li>
-                <li><i className="vi bi-chevron-right"></i>Easy to Use</li>
-                <li><i className="vi bi-chevron-right"></i>Unlimited Features</li>
-                <li><i className="vi bi-chevron-right"></i>Unlimited Features</li>
+                <li><i className="vi bi-chevron-right"></i>Secure payments through trusted service providers</li>
+                <li><i className="vi bi-chevron-right"></i>Use anytime</li>
+                <li><i className="vi bi-chevron-right"></i>Competitve prices on all services offered</li>
+                <li><i className="vi bi-chevron-right"></i>Easy to use</li>
+                <li><i className="vi bi-chevron-right"></i>Get support for any problems</li>
               </ul>
 
             </div>

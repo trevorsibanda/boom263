@@ -17,11 +17,12 @@ export default function MyOrders(props) {
 
   let load = () => {
     config.pastOrders().then(orders_ => {
-      if (orders_.length === 0) {
+      if (orders_ &&  orders_.length === 0) {
         alert('Load orders', 'You have no past orders')
         setLoading(false)
+        return
       }
-      setOrders(orders_)
+      setOrders(orders_ || [])
       setLoading(false)
     }).catch(err => {
       alert('Load orders', 'Failed to load your orders with error: ' + JSON.stringify(err))
