@@ -274,7 +274,6 @@ function withAdminAuth(req, res, callback) {
 
     return callback(req, res)
   } else {
-    slack_activity("Failed to authenticate admin request " + JSON.stringify(req))
     res.jsonp({
         error: 'Incorrect admin token passed' + req.headers['x-api-key']
     })
