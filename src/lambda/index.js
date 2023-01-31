@@ -260,13 +260,15 @@ function withDerivAuth(req, res, callback) {
 
 function withAdminAuth(req, res, callback) {
   
-  if (req.headers && req.headers['x-api-key'] && req.headers['x-api-key'] !== adminAPIKey) {
+  if (req.headers && req.headers['x-api-key'] && req.headers['x-api-key'] === adminAPIKey) {
+
+    return callback(req, res)
+  } else {
     res.jsonp({
         error: 'Incorrect admin token passed' + req.headers['x-api-key']
     })
     return
   }
-  return callback(req, res)
 }
 
 const router = express.Router();
