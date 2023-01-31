@@ -10,7 +10,7 @@ export default function About(props) {
         <div className="row justify-content-center">
 
           <div className="col-md-5 col-lg-3">
-            <img src="/assets/banner.gif" alt="About" data-aos="zoom-in" data-aos-delay="100" />
+            <img src="/assets/img/banner.gif" alt="About" data-aos="zoom-in" data-aos-delay="100" />
           </div>
 
           <div className="col-md-7 col-lg-5">
