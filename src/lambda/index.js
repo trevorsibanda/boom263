@@ -82,9 +82,8 @@ function createNewOrder(user, data) {
       "created": f.Now(),
       "amount": data.amount * data.quantity,
       "status": "pending"
-    }
-    //,TODO: Enable TTL for non fulfilled orders
-    //ttl: f.TimeAdd(f.Now(), 6, "hours"), //remove this if 
+    },
+    ttl: f.TimeAdd(f.Now(), 2, "hours"), //non fulfilled orders expire after 2 hours 
   }
 
   return dbClient.query(f.Create(ordersCollection, document)).then(doc => {
@@ -112,7 +111,8 @@ function popStock(package_) {
 }
 
 function setOrderPaid(order, stock, amount) {
-  let query = f.Update(f.Ref(ordersCollection, order._id), {data: {"status": "paid", "paidAt": f.Now(), "amount_paid": amount, "token": stock.data, "stock_id": stock.ref}})
+  let ttl = f.TimeAdd(f.Now(), 365, "days") //non fulfilled orders expire after 365 days
+  let query = f.Update(f.Ref(ordersCollection, order._id), {ttl,  data: {"status": "paid", "paidAt": f.Now(), "amount_paid": amount, "token": stock.data, "stock_id": stock.ref}})
   return dbClient.query(query)
 }
 
