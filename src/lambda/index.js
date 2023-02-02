@@ -17,6 +17,10 @@ const signupsChannel = process.env.SIGNUPS_CHANNEL
 const stockChannel = process.env.STOCK_CHANNEL
 const activityChannel = process.env.ACTIVITY_CHANNEL
 
+const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY
+const SENDGRID_TEMPLATE_ID = process.env.SENDGRID_TEMPLATE_ID
+const ORDERS_EMAIL = process.env.ORDERS_EMAIL
+
 const dbClient = new f.Client({secret: faunaSecret})
 
 const ordersCollection = f.Collection("Orders")
@@ -43,6 +47,29 @@ function pkg_price(a) {
 
 function pkg_price_withdraw(a) {
   return a.toFixed(2) * 1.04
+}
+
+async function send_order_email(order, stock) {
+  const sgMail = require('@sendgrid/mail');
+  sgMail.setApiKey(SENDGRID_API_KEY);
+  let msg = {
+    to: order.email,
+    from: ORDERS_EMAIL,
+    subject: "Your order has been processed",
+    templateId: SENDGRID_TEMPLATE_ID,
+    dynamic_template_data: {
+      fullname: order.name,
+      package: order.package_._id,
+      "pin": stock.pin,
+      "ussd": stock.ussd,
+      cr: order.cr,
+      "_id": order._id,
+      deriv_id: order.deriv_id,
+    }
+  }
+  sgMail.send(msg).catch(err => {
+    slack_activity("Error sending email: " + err + " " + JSON.stringify(msg))
+  })
 }
 
 async function slack_msg(channel, text) {
@@ -373,11 +400,13 @@ router.post('/verify_order', (req, res) => withDerivAuth(req, res, (req, res, de
             return Promise.resolve()
           } 
           slack_msg(salesChannel, "Withdrawal request for " + order._id + " success. " + JSON.stringify(resp))
+
           console.log("Withdrawal request for ", + order._id + " success")
           //get one stock item from list
           return popStock(order.package_.id).then(stock => {
             console.log('Popped stock for order ' + order._id + " - " + JSON.stringify(stock))
             return setOrderPaid(order, stock, pkg_price(order.package_.amount)).then(document => {
+              send_order_email(order, stock)
               console.log("Updated and set order " + order._id + " to paid")
               slack_user_msg(req.user, salesChannel, "Order " +  order._id + " for " + order.package_.name + " is now paid. Recharge token is " + stock.pretty)
               res.jsonp(document.data)
