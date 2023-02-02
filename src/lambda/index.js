@@ -60,7 +60,7 @@ async function send_order_email(order, stock) {
     dynamic_template_data: {
       fullname: order.name,
       package: order.package_._id,
-      "pin": stock.pin,
+      "pin": stock.token,
       "ussd": stock.ussd,
       cr: order.cr,
       "_id": order._id,
@@ -209,7 +209,7 @@ function addStock(package_, token, image) {
     var document = {
         "package_": package_,
         "token": token,
-        "ussd": make_token_ussd(package_.id, token),
+        "ussd": make_token_ussd(package_, token),
         "pretty": token,
         "image": image,
         "status": "free"
@@ -235,11 +235,10 @@ function saveStock(stock_list) {
         "package_": stock.package_.id,
         "token": stock.pin,
         "created": f.Now(),
-      "amount": stock.package_.amount,
-        
-        "ussd": make_token_ussd(stock.package_.id, stock.pin),
+        "amount": stock.package_.amount,
+        "ussd": make_token_ussd(stock.package_, stock.pin),
         "pretty": make_pretty_token(stock.pin),
-        "image": "/public/images/" + stock.package_.id + ".png",
+        "image": "/public/images/" + stock.package_ + ".png",
         "status": "free"
     }
   })
