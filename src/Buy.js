@@ -97,8 +97,7 @@ function Buy(props) {
                                 <li>Safe and secure payment</li>
                                 <li><strong>IMPORTANT:</strong>
                                     <span class="text-danger">By clicking Buy, we will send you a Deriv payment
-                                        agent withdrawal request to your account. When you click on the link sent to your email,
-                                        we will process your airtime payment.</span></li>
+                                        agent withdrawal request to your account. Click on the link in the email and you will be taken to a page to confirm processing your order.</span></li>
                             </ul>
                             <div className="table_btn">
                                 <button onClick={onPayClick} disabled={loading} className="btn btn-success"><i className="bi bi-cart"></i>Pay USD${config.pkg_price(package_.amount)} with Deriv </button>

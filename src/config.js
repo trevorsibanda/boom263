@@ -4,6 +4,10 @@ import {reactLocalStorage} from 'reactjs-localstorage';
 
 const devMode = false
 
+const derivTnc = "https://deriv.com/terms-and-conditions/#clients"
+const whatsappURI = "https://wa.me/263737065458?text=Boom263+Help"  
+const supportEmail = "support@boom263.co.zw"
+
 //available packages for sale
 const packages = [
     {
@@ -167,6 +171,9 @@ function refundOrder(order) {
 
 const config = {
     packages,
+    whatsappURI,
+    supportEmail,
+    derivTnc,
     admin: {
         filterOrders,
         filterStock,

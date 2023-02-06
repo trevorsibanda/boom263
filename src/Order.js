@@ -24,10 +24,11 @@ function OrderFailure(props) {
               </p>
 
               <ul className="list-unstyled">
-                <li><i className="vi bi-chevron-right"></i><b>REASON FAILED</b>: <pre>{JSON.stringify(props.error)}</pre></li>
+                <li><i className="vi bi-chevron-right"></i><b>REASON FAILED</b>: <pre>{ props.error && props.error.reason ? props.error.reason : JSON.stringify(props.error)}</pre></li>
                 <li><i className="vi bi-chevron-right"></i><b>OrderID</b> {order && order._id ? order._id : "NIL"}</li>
                 <li><i className="vi bi-chevron-right"></i><b>Package</b> {order && order.package_ ? order.package_.id : "NIL"}</li>
                 <li><i className="vi bi-chevron-right"></i><b>Amount</b> {order && order.amount ? order.amount  : "???"}</li>
+                <li><a href={config.whatsappURI} class="btn btn-danger btn-block" ><i className="vi bi-support"></i>Need help, talk to us on Whatsapp</a></li>
               </ul>
 
             </div>
@@ -86,7 +87,7 @@ function OrderSuccess(props) {
                 <li><i className="vi bi-chevron-right"></i>Buyer account: <b>{order.purchaser.fullname}</b></li>
                 <li><i className="vi bi-chevron-right"></i>Amount Paid: <b>USD${order.amount_paid}</b></li>
                 <li><i className="vi bi-chevron-right"></i>Time Paid: <b>{order.paidAt ? order.paidAt["@ts"] : "recently"}</b></li>
-                <li>Need help? <a href="/support">Talk to our customer support on Whatsapp</a></li>
+                    <li>Need help? <a href={config.whatsappURI} target="_blank" rel="noreferrer">Talk to our customer support on Whatsapp</a></li>
               </ul>
 
             </div>
@@ -205,6 +206,7 @@ function OrderPending(props) {
               </div> 
               <ul className="list-unstyled"> 
                 <li><i className="vi bi-chevron-right"></i><b>You are paying USD${config.pkg_price(order.package_.amount)}</b></li>
+                <li><a href={config.whatsappURI} class="btn btn-danger btn-block" ><i className="vi bi-support"></i>Need help, talk to us on Whatsapp</a></li>
               </ul>
 
             </div>

@@ -34,6 +34,8 @@ function Boom263(){
             <Route path="/order/verify" element={<Order />} />
             <Route path="/order/:id/:package_" element={<Order />} />
             <Route path="/order/:id" element={<Order />} />
+            <Route path="/whatsapp" element={<About whatsapp={true} />} />
+            <Route path="/tnc" element={<About tnc={true} /> } />
             <Route path="*" element={<Page404 />}/>
           </Routes>
           <Footer />

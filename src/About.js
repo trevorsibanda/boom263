@@ -1,7 +1,25 @@
+import config from "./config"
+import Loader from "./Loader"
 
+function takeMeTo(url) {
+  setTimeout(_ => {
+    window.location.href = url
+  }, 1000)
+}
 
 
 export default function About(props) {
+
+  if (props.whatsapp === true) {
+      console.log(props)
+      takeMeTo(config.whatsappURI)
+      return <Loader text="Opening Whatsapp chat" />
+  }
+  if (props.tnc === true) {
+    takeMeTo(config.derivTnc)
+    return <Loader text="Taking you to deriv terms and conditions" />
+  }
+
     return (
           <main id="main" style={{marginTop:"100px"}}>
 
@@ -25,7 +43,7 @@ export default function About(props) {
                       <li>InnBucks <sup><b>Coming soon</b></sup></li>
                     </ul>
                     <br />
-                    For more information, please contact us by <a href="mailto:support@boom263.co.zw">Email or WhatsApp</a>
+                    For more information, please contact us by <a href={config.whatsappURI}>Email or WhatsApp</a>
               </p>
 
               <ul className="list-unstyled">
@@ -34,6 +52,8 @@ export default function About(props) {
                 <li><i className="vi bi-chevron-right"></i>Competitve prices on all services offered</li>
                 <li><i className="vi bi-chevron-right"></i>Easy to use</li>
                 <li><i className="vi bi-chevron-right"></i>Get support for any problems</li>
+                <li><a href={config.whatsappURI} class="btn btn-success btn-block" >Talk to us on Whatsapp</a></li>
+                <li><a  href={"mailto:" + config.supportEmail} class="btn btn-primary btn-block" >Send us an email</a></li>
               </ul>
 
             </div>
