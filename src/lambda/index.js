@@ -183,7 +183,7 @@ function listAllStock(filter) {
     for (var i = 0; i < stock.length; i++){
         let ts = stock[i]
         stock[i] = ts.data
-        stock[i]._id = ts.ref._id
+        stock[i]._id = ts.ref.id
     }
     return Promise.resolve(stock)
   })

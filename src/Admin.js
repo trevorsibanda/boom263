@@ -259,7 +259,7 @@ function ListStock() {
          <td>{s.ocr}</td>
          <td>{s.created ?  s.created["@ts"] : "N/A"}</td>
          <td>show-image-here</td>
-        <td><button  className="btn btn-danger btn-sm" onClick={_ => deleteStock(s._id)} ><i class="fa bi-times text-danger"></i> Delete</button></td>
+        <td><button  className="btn btn-danger btn-xs" onClick={_ => deleteStock(s._id)} ><i class="fa bi-times text-danger"></i> Delete</button></td>
       </tr>
         })}
       
