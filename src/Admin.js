@@ -91,13 +91,13 @@ function ListOrders(props) {
 }
 function AddStock() {
     let [stock, setStock] = useState([{
-        package_: config.packages[0],
+        package_: config.packages[0].id,
         pin: ""
     }])
     
     let addNewStock = () => {
         stock.push({
-            package_: config.packages[0],
+            package_: stock[stock.length - 1].package_,
             pin: ""
         })
         let nstock = [...stock]
