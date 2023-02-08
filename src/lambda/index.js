@@ -178,8 +178,15 @@ function listAllStock(filter) {
   } else {
     idx = stockPackageSearchIndex
   }
-  let query = f.Map(f.Select("data", f.Paginate(f.Match(idx, filter), {size: 1000})), f.Lambda("v", f.Select("data", f.Get(f.Var("v")))))
-  return dbClient.query(query)
+  let query = f.Map(f.Select("data", f.Paginate(f.Match(idx, filter), {size: 1000})), f.Lambda("v", f.Get(f.Var("v"))))
+  return dbClient.query(query).then(stock => {
+    for (var i = 0; i < stock.length; i++){
+        let ts = stock[i]
+        stock[i] = ts.data
+        stock[i]._id = ts.ref._id
+    }
+    return Promise.resolve(stock)
+  })
 }
 
 function checkUserExists(loginid) {
@@ -232,7 +239,7 @@ function make_pretty_token(token) {
 function saveStock(stock_list) {
   let stock_items = stock_list.map(stock => {
     return {
-        "package_": stock.package_.id,
+        "package_": stock.package_,
         "token": stock.pin,
         "created": f.Now(),
         "amount": stock.package_.amount,
@@ -246,6 +253,12 @@ function saveStock(stock_list) {
     return Promise.resolve(stock_list)
   })
 }
+
+function removeStock(stock_id) {
+  let query = f.Delete(f.Ref(stockCollection, stock_id))
+  return dbClient.query(query)
+}
+
 
 function retrieveOrder(order_id) {
   return dbClient.query(f.Get(f.Ref(ordersCollection, order_id))).then(document => {
@@ -514,6 +527,19 @@ router.post('/admin_save_stock', (req, res) => withAdminAuth(req, res, (req, res
   }).catch(err => {
     res.jsonp({
       error: 'Failed to save stock',
+      reason: JSON.stringify(err)
+    })
+  })
+
+}))
+
+router.post('/admin_remove_stock', (req, res) => withAdminAuth(req, res, (req, res) => {
+  return removeStock(req.body._id).then(stock => {
+    slack_msg(stockChannel, 'Deleted stock: ' + JSON.stringify(stock) )
+    res.jsonp({ stock, status: 'ok' })
+  }).catch(err => {
+    res.jsonp({
+      error: 'Failed to remove stock',
       reason: JSON.stringify(err)
     })
   })

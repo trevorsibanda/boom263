@@ -200,6 +200,22 @@ function ListStock() {
         })
     }
 
+    let deleteStock = (_id) => {
+        if (window.confirm("Are you sure you want to delete this stock item ?")) {
+            config.admin.removeStock(_id).then(resp => {
+                setStock([])
+                applyStocksFilter(filter)
+                if (resp && resp.status === 'ok') {
+                    alert('Delete stock', 'Successfully deleted stock')
+                } else {
+                    alert('Delete stock', 'Failed to delete stock')
+                }
+            }).catch(_ => {
+                alert('Error', 'Failed to delete stock')
+            })
+        }
+    }
+
     return (
         <div className="row" data-aos="fade-up" data-aos-delay="100">
                         <div className="block-pricing">
@@ -243,7 +259,7 @@ function ListStock() {
          <td>{s.ocr}</td>
          <td>{s.created ?  s.created["@ts"] : "N/A"}</td>
          <td>show-image-here</td>
-        <td><a href="/#"><i class="fa bi-times text-danger"></i> Delete</a></td>
+        <td><button  className="btn btn-danger btn-sm" onClick={_ => deleteStock(s._id)} ><i class="fa bi-times text-danger"></i> Delete</button></td>
       </tr>
         })}
       
