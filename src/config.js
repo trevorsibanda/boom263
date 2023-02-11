@@ -47,7 +47,7 @@ function currentOrder(checkUrl = false) {
 }
 
 function getPackage(package_) {
-    let order = packages.filter(pkg => pkg.id === package_)
+    let order = packages.find(pkg => pkg.id === package_)
     return order
 }
 
@@ -100,8 +100,8 @@ function api_post(uri, data) {
     })
 }
 
-function createNewOrder(package_, quantity) {
-    return api_post("new_order", {package_, quantity})
+function createNewOrder(package_, payment_method, quantity = 1) {
+    return api_post("new_order", {package_, payment_method, quantity})
 }
 
 function derivLoginURL() {

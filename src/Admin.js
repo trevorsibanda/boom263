@@ -76,7 +76,7 @@ function ListOrders(props) {
          <td>{order.cr}</td>
          <td>{order.package_.amount}/{config.pkg_price(order.package_.amount)}</td>
          <td>{order.token ? order.token.pretty : "N/A"}</td>
-        <td><a href="/#" class="text-danger" onClick={doRefund}>Refund</a></td>
+        <td><a href="/#" className="text-danger" onClick={doRefund}>Refund</a></td>
       </tr>
         })}
       
@@ -259,7 +259,7 @@ function ListStock() {
          <td>{s.ocr}</td>
          <td>{s.created ?  s.created["@ts"] : "N/A"}</td>
          <td>show-image-here</td>
-        <td><button  className="btn btn-danger btn-xs" onClick={_ => deleteStock(s._id)} ><i class="fa bi-times text-danger"></i> Delete</button></td>
+        <td><button  className="btn btn-danger btn-xs" onClick={_ => deleteStock(s._id)} ><i className="fa bi-times text-danger"></i> Delete</button></td>
       </tr>
         })}
       

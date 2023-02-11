@@ -5,7 +5,7 @@ function Hero() {
     return (
   <section id="hero">
     <div className="hero-container" data-aos="fade-in">
-      <h1>Welcome to <span class="text-success">Boom</span><span class="text-danger">263</span></h1>
+      <h1>Welcome to <span className="text-success">Boom</span><span className="text-danger">263</span></h1>
       <h2>Instantly buy airtime, data bundles and more at a fair price using your Deriv balance.</h2>
       <img src="/assets/img/hero-img.png" alt="Hero Imgs" data-aos="zoom-out" data-aos-delay="100" />
       <Link to="/login" className="btn-get-started scrollto">Login with Deriv</Link>

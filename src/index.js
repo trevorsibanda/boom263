@@ -32,6 +32,7 @@ function Boom263(){
             <Route path="/buy/:package_" element={<Buy />} />
             <Route path="/orders" element={<MyOrders />} />
             <Route path="/order/verify" element={<Order />} />
+            <Route path="/order/:id/:package_/:pmethod" element={<Order />} />
             <Route path="/order/:id/:package_" element={<Order />} />
             <Route path="/order/:id" element={<Order />} />
             <Route path="/whatsapp" element={<About whatsapp={true} />} />
@@ -69,7 +70,7 @@ function Page404(props) {
 
           
           <div className="col-md-12 col-lg-12">
-            <h4 class="text-center">Page not Found - Error 404</h4>
+            <h4 className="text-center">Page not Found - Error 404</h4>
           </div>
           <div className="col-md-12 col-lg-12">
             <img src="assets/img/404.jpg" alt="Pre loader" data-aos="zoom-in" data-aos-delay="100" />

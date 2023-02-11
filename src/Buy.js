@@ -15,6 +15,7 @@ function Buy(props) {
         data: "Loading...",
 
     })
+    let [pmethod, setPmethod] = useState("deriv")
     let [redirectToLogin, setRedirectToLogin] = useState(false)
     let [redirectToOrder, setRedirectToOrder] = useState(false)
     let [loading, setLoading] = useState(true)
@@ -48,10 +49,11 @@ function Buy(props) {
 
     let onPayClick = () => {
         setLoading(true)
-        setLoadingMsg("Creating order for " + package_.name)
+        setLoadingMsg("Creating order for " + package_.name + "paying using " + pmethod)
         config.setPostLogin('/buy/' + package_.id)
         config.saveCurrentOrder({
-         package_, status: 'not_created',
+            package_, status: 'not_created', 
+            payment_method: pmethod,
         }).then((order_) => {
             if (order_.error) {
                 window.alert("Failed to create order", order_.error, "error")
@@ -79,28 +81,47 @@ function Buy(props) {
         <section id="pricing" className="padd-section text-center">
 
             <div className="container" data-aos="fade-up">
-                <div className="section-title text-center">
-
-                    <h2>Buy {package_.name}</h2>
-                    <p className="separator">Secure and safe payment using your Deriv balance.</p>
-                </div>
+                
                 <div className="row" data-aos="fade-up" data-aos-delay="100">
                     <div className="block-pricing">
                         <div className="pricing-table">
-                            <h4>{package_.provider}</h4>
+                            <h4>Buy {package_.name}</h4>
+                            <p>{package_.description}</p>
                             <h2>USD ${package_.amount}</h2>
                             <ul className="list-unstyled">
                                 <li>
                                     <img src={"/assets/img/"+ package_.id + ".png"} alt="recharge card" style={{ maxWidth: "200px" }} />
                                 </li>
-                                <li>Save up to 15% compared to buying using DerivP2P</li>
+                                {pmethod === "deriv" ? <li>Save up to 15% compared to buying using DerivP2P</li> : null}
+                                {pmethod === "innbucks" ? <li>Anytime, instant payments using Innbucks.</li> : null}
                                 <li>Safe and secure payment</li>
-                                <li><strong>IMPORTANT:</strong>
-                                    <span class="text-danger">By clicking Buy, we will send you a Deriv payment
-                                        agent withdrawal request to your account. Click on the link in the email and you will be taken to a page to confirm processing your order.</span></li>
+                                <li>
+                                    <label>Payment method</label>
+                                    <select value={pmethod} onChange={evt => setPmethod(evt.target.value)} className="form-control" id="payment_method">
+                                    <option value={"innbucks"} >InnBucks</option>
+                                    <option value={"deriv"} >Deriv Balance</option>
+                                    </select>
+                                {pmethod === "deriv" ? <>
+                                    <strong>Paying with Deriv:</strong>
+                                        <p style={{textTransform: "none"}}  >Payment is in the form of a secure Deriv payment agent withdrawal request.
+                                            On clicking Buy, an email will be sent to you with a link to confirm the payment.</p>
+                                        </>
+                                    : null}
+                                {pmethod === "innbucks" ?
+                                    <><strong>Paying with Innbucks:</strong>
+                                        <p style={{textTransform: "none"}} >You will be required to send the <strong className="text-danger">EXACT Amount</strong> to a number shown on
+                                            the next page. After sending, enter the Ref from the Innbucks transaction and the payment
+                                            will be instantly verified</p>
+                                    </>
+                                        : null}
+                                </li>
+                                <li>You will pay USD${config.pkg_price(package_.amount)} only</li>
+
                             </ul>
                             <div className="table_btn">
-                                <button onClick={onPayClick} disabled={loading} className="btn btn-success"><i className="bi bi-cart"></i>Pay USD${config.pkg_price(package_.amount)} with Deriv </button>
+                                
+                                <button onClick={onPayClick} disabled={loading} className="btn btn-success"><i className="bi bi-cart"></i>Order {package_.name}</button>
+                                
                             </div>
                         </div>
                     </div>
@@ -111,11 +132,10 @@ function Buy(props) {
     )
 
     if (redirectToOrder) {
-        component = < Navigate to={'/order/new/' + package_.id} />
+        component = < Navigate to={'/order/new/' + package_.id + "/" + pmethod} />
     }
 
     if (redirectToLogin) {
-        
         component = <Navigate to="/login" />
     }
 

@@ -6,7 +6,10 @@ const path = require('path');
 const serverless = require('serverless-http');
 const DerivAPI = require('@deriv/deriv-api/dist/DerivAPI');
 
-let appId = process.env.DERIV_APP_ID
+const paymentMethods = ["deriv", "innbucks"]
+
+
+const appId = process.env.DERIV_APP_ID
 const adminAPIKey = process.env.ADMIN_API_KEY
 const faunaSecret = process.env.FAUNA_SECRET
 const paymentagent_loginid = process.env.DERIV_PAYMENTAGENT_LOGINID
@@ -32,6 +35,10 @@ const stockCollection = f.Collection("Stock")
 const stockPackageSearchIndex = f.Index("stockIndex")
 const stockAllStatusIndex = f.Index("stockAllStatusIndex")
 const stockStatusIndex = f.Index("statusStockIndex")
+
+const innbucksTXCollection = f.Collection("innbucksTx")
+const innbucksRefIndex = f.Index("innbucksRefIndex")
+const innbucksUserIndex = f.Index("innbucksUserIndex")
 
 const userLoginIdIndex = f.Index("userLoginIdIndex")
 const usersCollection = f.Collection("Users")
@@ -97,6 +104,7 @@ function createNewOrder(user, data) {
   var document = {
     data: {
       "_id": "",
+      "payment_method": data.payment_method,
       "package_": data.package_,
       "name": user.fullname,
       "cr": user.loginid,
@@ -142,6 +150,32 @@ function setOrderPaid(order, stock, amount) {
   let query = f.Update(f.Ref(ordersCollection, order._id), {ttl,  data: {"status": "paid", "paidAt": f.Now(), "amount_paid": amount, "token": stock.data, "stock_id": stock.ref}})
   return dbClient.query(query)
 }
+
+function setInnbucksPaymentUsed(fauna_ref, order_id) {
+  let query = f.Update(fauna_ref, { data: { "order_id": order_id } })
+  return dbClient.query(query)
+}
+
+//todo: add remote check so we don't rely on database
+function checkInnbucksPayment(order_id, reference, expected) {
+  let query = f.Select(["data", 0], f.Paginate(f.Match(innbucksRefIndex, reference)))
+  dbClient.query(query).then(doc => {
+    if (doc.data.amount === expected) {
+      return setInnbucksPaymentUsed(doc.ref, order_id)
+    } else if (doc.data.amount < expected) {
+      return Promise.reject({
+        error: "Amount paid is less than expected",
+        reason: "Expected " + expected + " but got " + doc.data.amount + " for Innbucks " + reference
+      })
+    } else if (doc.data.amount > expected) {
+      slack_msg(activityChannel, "Customer overpaid. Expected " + expected + " but got " + doc.data.amount + " for Innbucks " + reference)
+      //not a fatal error
+      return doc.data
+    }
+  })
+}
+
+
 
 
 function listAllUserOrders(cr) {
@@ -283,6 +317,7 @@ function paymentAgentInitWithdraw(derivBasicAPI, id, email) {
 }
 
 function withDerivAuth(req, res, callback) {
+
   let conn = new WebSocket('wss://ws.binaryws.com/websockets/v3?app_id='+ appId);
   let d        = new DerivAPI({ connection: conn });
   let b = d.basic
@@ -311,6 +346,10 @@ function withDerivAuth(req, res, callback) {
 
 }
 
+function withNoAuth(req, res, callback) {
+  return callback(req, res)
+}
+
 function withAdminAuth(req, res, callback) {
   
   if (req.headers && req.headers['x-api-key'] && req.headers['x-api-key'] === adminAPIKey) {
@@ -331,7 +370,7 @@ router.get('/', (req, res) => {
   res.end();
 });
 
-router.post('/new_order', (req, res) => withDerivAuth(req, res, (req, res, derivBasicAPI) => {
+router.post('/new_order', (req, res) => {
   let body = req.body
   //check if stock exists first
   return checkStockExists(body.package_.id).then(count => {
@@ -342,32 +381,52 @@ router.post('/new_order', (req, res) => withDerivAuth(req, res, (req, res, deriv
       })
       return
     }
-    return createNewOrder(req.user, body).then(document => {
-      console.log("Created new order ", document)
-      //document.data._id = document.ref.id
-      return paymentAgentInitWithdraw(derivBasicAPI, document._id, req.user.email).then(dr => {
-        console.log("Created deriv payment agent withdrawal request")
-        res.jsonp(document)
+    if (!paymentMethods.includes(body.payment_method)) {
+      res.jsonp({ error: 'Invalid payment method', reason: body.payment_method })
+      return
+    }
+
+    let auth = null
+    switch (body.payment_method) {
+      case 'deriv':
+        auth = withDerivAuth
+        break
+      case 'innbucks':
+        auth = withNoAuth
+        break;
+      default:
+        res.jsonp({ error: 'Invalid payment method', reason: body.payment_method })
+        return
+    }
+
+    return auth(req, res, (req, res, derivBasicAPI) => {
+      return createNewOrder(req.user, body).then(document => {
+        console.log("Created new order ", document)
+        //document.data._id = document.ref.id
+        return paymentAgentInitWithdraw(derivBasicAPI, document._id, req.user.email).then(dr => {
+          console.log("Created deriv payment agent withdrawal request")
+          res.jsonp(document)
+        }).catch(err => {
+          res.jsonp({
+            error: 'Created order, but failed to send a withdrawal request to your Deriv account',
+            reason: { err }
+          })
+        })
+            
       }).catch(err => {
-        res.jsonp({
-          error: 'Created order, but failed to send a withdrawal request to your Deriv account',
-          reason: { err }
+        res.json({
+          error: "Failed to create new order",
+          reason: JSON.stringify(err),
         })
       })
-        
     }).catch(err => {
       res.json({
-        error: "Failed to create new order",
+        error: "Failed to check stock",
         reason: JSON.stringify(err),
       })
     })
-  }).catch(err => {
-    res.json({
-      error: "Failed to check stock",
-      reason: JSON.stringify(err),
-    })
   })
-}))
+})
 
 router.post('/fetch_order', (req, res) => {
   return retrieveOrder(req.body._id).then(document => {
@@ -382,95 +441,152 @@ router.post('/fetch_order', (req, res) => {
         })
 })
 
-router.post('/verify_order', (req, res) => withDerivAuth(req, res, (req, res, derivBasicAPI) => {
-  console.log(req.body)
-  return retrieveOrder(req.body._id).then(order => {
+
+
+
+router.post('/verify_order', (req, res) => {
+
+    return retrieveOrder(req.body._id).then(order => {
+
+    let auth = null
+    switch (req.body.payment_method) {
+      case 'deriv':
+        auth = withDerivAuth
+        break
+      case 'innbucks':
+        auth = withNoAuth
+        break;
+      default:
+        res.jsonp({ error: 'Invalid payment method', reason: req.body.payment_method })
+        return
+    }
     //check if we have stock
     let dry_run = 0
     console.log("Checking stock for " + order.package_.id)
-    return checkStockExists(order.package_.id).then(count => {
-      console.log("Stock count for " + order.package_.id + " is " + count)
-      if (count === 0) {
-        
-        slack_user_msg(req.user, salesChannel, "Failed to verify order for " + order.package_.name + " because we are out of stock")
-        res.jsonp({ 
-          error: 'Sorry selected item is now out of stock'
-        })
-        return Promise.resolve()
-      } else {
-        if (count < 10) {
-          slack_msg(stockChannel, 'Low stock for ' + order.package_.name + " - " + count + " left")
-        }
+    return auth(req, res, (req, res, derivBasicAPI) => {
+      checkStockExists(order.package_.id).then(count => {
+        console.log("Stock count for " + order.package_.id + " is " + count)
+        if (count === 0) {
+      
+          slack_user_msg(req.user, salesChannel, "Failed to verify order for " + order.package_.name + " because we are out of stock")
+          res.jsonp({
+            error: 'Sorry selected item is now out of stock'
+          })
+          return Promise.resolve()
+        } else {
+          if (count < 10) {
+            slack_msg(stockChannel, 'Low stock for ' + order.package_.name + " - " + count + " left")
+          }
 
-        return paymentAgentDoWithdraw(derivBasicAPI, order, req.body.verification_code, dry_run).then(resp => {
+          let payFunction = null
+          switch (order.payment_method) {
+            case 'deriv':
+              payFunction = paymentAgentDoWithdraw(derivBasicAPI, order, req.body.verification_code, dry_run)
+              break;
+            case 'innbucks':
+              payFunction = checkInnbucksPayment(order, req.body.verification_code)
+              break;
+            default:
+              payFunction = paymentAgentDoWithdraw(derivBasicAPI, order, req.body.verification_code, dry_run)
+              break;
+          }
+          return payFunction.then(resp => {
 
-          if (resp && resp.error && resp.error.code) {
-            res.jsonp({
-              error: 'Failed to withdraw funds from your Deriv account: ' + resp.error.code,
-              reason: resp.error.message
-            })
-            return Promise.resolve()
-          } 
-          slack_msg(salesChannel, "Withdrawal request for " + order._id + " success. " + JSON.stringify(resp))
+            switch (order.payment_method) {
+          
+              case 'innbucks':
+                slack_msg(salesChannel, "Innbucks payment for " + order._id + " success. " + JSON.stringify(resp))
+                console.log("Innbucks payment for ", + order._id + " success")
 
-          console.log("Withdrawal request for ", + order._id + " success")
-          //get one stock item from list
-          return popStock(order.package_.id).then(stock => {
-            console.log('Popped stock for order ' + order._id + " - " + JSON.stringify(stock))
-            return setOrderPaid(order, stock, pkg_price(order.package_.amount)).then(document => {
-              send_order_email(order, stock)
-              console.log("Updated and set order " + order._id + " to paid")
-              slack_user_msg(req.user, salesChannel, "Order " +  order._id + " for " + order.package_.name + " is now paid. Recharge token is " + stock.pretty)
-              res.jsonp(document.data)
+                break;
+              default:
+
+                if (resp && resp.error && resp.error.code) {
+                  res.jsonp({
+                    error: 'Failed to withdraw funds from your Deriv account: ' + resp.error.code,
+                    reason: resp.error.message
+                  })
+                  return Promise.resolve()
+                }
+                slack_msg(salesChannel, "Withdrawal request for " + order._id + " success. " + JSON.stringify(resp))
+                console.log("Withdrawal request for ", + order._id + " success")
+            
+                break;
+
+            }
+            
+            //get one stock item from list
+            return popStock(order.package_.id).then(stock => {
+              console.log('Popped stock for order ' + order._id + " - " + JSON.stringify(stock))
+              return setOrderPaid(order, stock, pkg_price(order.package_.amount)).then(document => {
+                send_order_email(order, stock)
+                console.log("Updated and set order " + order._id + " to paid")
+                slack_user_msg(req.user, salesChannel, "Order " + order._id + " for " + order.package_.name + " is now paid. Recharge token is " + stock.pretty)
+                res.jsonp(document.data)
+              }).catch(err => {
+                console.log("Fatal error, failed to update order after paid " + order._id)
+                
+                slack_msg(salesChannel, "SETOrderPaid ::: Failed to update order after paid " + order._id + " with error: " + err)
+                slack_msg(salesChannel, "CRITICAL: Contact buyer and find way to resolve issue " + JSON.stringify(stock) + "\n" + JSON.stringify(order))
+                res.jsonp({
+                  error: 'Your order failed at the end, but your recharge pin is ' + stock.data.code,
+                  reason: stock.data
+                })
+              })
             }).catch(err => {
-              console.log("Fatal error, failed to update order after paid " + order._id)
               
-              slack_msg(salesChannel, "SETOrderPaid ::: Failed to update order after paid " + order._id + " with error: " + err)
-              slack_msg(salesChannel, "CRITICAL: Contact buyer and find way to resolve issue " + JSON.stringify(stock) + "\n" + JSON.stringify(order))
+              slack_msg(salesChannel, "Failed to pop stock from list for order " + order._id + " with error: " + err)
+              slack_msg(salesChannel, "CRITICAL: Contact buyer and find way to resolve issue as payment went through " + JSON.stringify(order))
               res.jsonp({
-                error: 'Your order failed at the end, but your recharge pin is ' + stock.data.code,
-                reason: stock.data
+                error: 'Payment received but out of stock, contact support',
+                reason: 'Out of stock. Contact support'
               })
             })
           }).catch(err => {
-            
-            slack_msg(salesChannel, "Failed to pop stock from list for order " + order._id + " with error: " + err)
-            slack_msg(salesChannel, "CRITICAL: Contact buyer and find way to resolve issue as payment went through " + JSON.stringify(order))
-            res.jsonp({
-              error: 'Failed to pop stock from list',
-              reason: err
-            })
-          }) 
-        }).catch(err => {
-          if (err.error && err.error.code) {
-            
             slack_user_msg(req.user, salesChannel, "Failed to verify order for " + order.package_.name + " because of error: " + err.error.code + " - " + err.error.message)
+          
+            switch (order.payment_method) {
+              case 'innbucks':
+                res.jsonp(err)
+                return
+                break;
+              default:
+                if (err.error && err.error.code) {
+                  res.jsonp({
+                    error: 'Failed to withdraw funds from your Deriv account: ' + err.error.code,
+                    reason: err.error.message
+                  })
+                  return
+                }
+                
+                break;
+              
+            }
             res.jsonp({
-              error: 'Failed to withdraw funds from your Deriv account: ' + err.error.code,
-              reason: err.error.message
+              error: 'Failed to process payment. ',
+              reason: (err && err.error && err.error.message ? err.error.message : 'Something went wrong')
             })
-            return Promise.resolve()
-          }
-
-          res.jsonp({
-            error: 'Failed to process withdrawal request. ',
-            reason: (err && err.error && err.error.message ? err.error.message : 'Something went wrong')
+              
           })
+
+        }
+      }).catch(err => {
+        res.json({
+          error: 'Failed to check stock',
+          reason: err
         })
-      }
-    }).catch(err => {
-      res.json({
-        error: 'Failed to check stock',
-        reason: err
       })
     })
+
+
   }).catch(err => {
           res.json({
             error: "Failed to retrieve order",
             reason: JSON.stringify(err),
             })
-        })
-}))
+  })
+  
+})
 
 router.post('/my_orders', (req, res) => withDerivAuth(req, res, (req, res, derivBasicAPI) => {
   return listAllUserOrders(req.body.deriv.cr).then(orders => {

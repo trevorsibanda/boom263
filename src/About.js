@@ -52,8 +52,8 @@ export default function About(props) {
                 <li><i className="vi bi-chevron-right"></i>Competitve prices on all services offered</li>
                 <li><i className="vi bi-chevron-right"></i>Easy to use</li>
                 <li><i className="vi bi-chevron-right"></i>Get support for any problems</li>
-                <li><a href={config.whatsappURI} class="btn btn-success btn-block" >Talk to us on Whatsapp</a></li>
-                <li><a  href={"mailto:" + config.supportEmail} class="btn btn-primary btn-block" >Send us an email</a></li>
+                <li><a href={config.whatsappURI} className="btn btn-success btn-block" >Talk to us on Whatsapp</a></li>
+                <li><a  href={"mailto:" + config.supportEmail} className="btn btn-primary btn-block" >Send us an email</a></li>
               </ul>
 
             </div>

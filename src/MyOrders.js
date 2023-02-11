@@ -33,7 +33,7 @@ export default function MyOrders(props) {
   let order_status = {
     "cancelled": <span className="text-danger"><b>CANCELLED</b></span>,
     "pending": <span className="text-warning"><b>PENDING</b></span>,
-    "paid": <span class="text-success"><b>PAID</b></span>,
+    "paid": <span className="text-success"><b>PAID</b></span>,
   }
 
     return loading ? <Loader text="Loading your orders" /> : (
