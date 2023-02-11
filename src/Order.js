@@ -346,7 +346,7 @@ class NewOrder extends Component{
         
         this.state = {
           working: true, success: false, order, loggedIn: config.checkLoggedIn(), error: '',
-          paymentMethod: props.pmethod ? props.pmethod : 'innbucks'
+          paymentMethod: props.pmethod
         }
       
     }
@@ -441,7 +441,7 @@ function Order(props) {
   
     
 
-    return props.params.id === "new" ? <NewOrder package_={props.params.package_} /> : (loading ? <Loader text="Loading your order" /> : page)
+    return props.params.id === "new" ? <NewOrder package_={props.params.package_} pmethod={props.params.pmethod} /> : (loading ? <Loader text="Loading your order" /> : page)
 }
 
 export default withRouter(Order)

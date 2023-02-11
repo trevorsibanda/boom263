@@ -421,7 +421,7 @@ router.post('/new_order', (req, res) => {
         if (body.payment_method === 'innbucks') {
           res.jsonp(document)
           return
-        }
+        } 
         return paymentAgentInitWithdraw(derivBasicAPI, document._id, req.user.email).then(dr => {
           console.log("Created deriv payment agent withdrawal request")
           res.jsonp(document)
@@ -483,7 +483,7 @@ router.post('/verify_order', (req, res) => {
     let dry_run = 0
     console.log("Checking stock for " + order.package_.id)
     return auth(req, res, (req, res, derivBasicAPI) => {
-      checkStockExists(order.package_.id).then(count => {
+      return checkStockExists(order.package_.id).then(count => {
         console.log("Stock count for " + order.package_.id + " is " + count)
         if (count === 0) {
       
