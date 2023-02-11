@@ -357,6 +357,11 @@ function withDerivAuth(req, res, callback) {
 }
 
 function withNoAuth(req, res, callback) {
+  req.user = {
+    loginid: "anonymous",
+    fullname: "Anonymous",
+    email: "anonymous@boom263.co.zw",
+  }
   return callback(req, res)
 }
 
@@ -413,6 +418,10 @@ router.post('/new_order', (req, res) => {
       return createNewOrder(req.user, body).then(document => {
         console.log("Created new order ", document)
         //document.data._id = document.ref.id
+        if (body.payment_method === 'innbucks') {
+          res.jsonp(document)
+          return
+        }
         return paymentAgentInitWithdraw(derivBasicAPI, document._id, req.user.email).then(dr => {
           console.log("Created deriv payment agent withdrawal request")
           res.jsonp(document)
