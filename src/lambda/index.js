@@ -39,6 +39,8 @@ const stockStatusIndex = f.Index("statusStockIndex")
 const innbucksTXCollection = f.Collection("innbucksTx")
 const innbucksRefIndex = f.Index("innbucksRefIndex")
 const innbucksUserIndex = f.Index("innbucksUserIndex")
+const innbucksAccount = process.env.INNBUCKS_ACCOUNT
+const innbucksAccountName = process.env.INNBUCKS_ACCOUNT_NAME
 
 const userLoginIdIndex = f.Index("userLoginIdIndex")
 const usersCollection = f.Collection("Users")
@@ -101,10 +103,18 @@ async function slack_activity_user(user, text) {
 }
 
 function createNewOrder(user, data) {
+  let innbucks = null
+  if (data.payment_method === "innbucks") {
+    innbucks = {
+      receiver: innbucksAccount,
+      receiver_name: innbucksAccountName,
+    }
+  }
   var document = {
     data: {
       "_id": "",
       "payment_method": data.payment_method,
+      innbucks,
       "package_": data.package_,
       "name": user.fullname,
       "cr": user.loginid,
@@ -585,7 +595,7 @@ router.post('/verify_order', (req, res) => {
             reason: JSON.stringify(err),
             })
   })
-  
+
 })
 
 router.post('/my_orders', (req, res) => withDerivAuth(req, res, (req, res, derivBasicAPI) => {
