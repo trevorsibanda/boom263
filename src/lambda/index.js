@@ -121,10 +121,9 @@ async function slack_activity_user(user, text) {
 
 function createNewOrder(user, data) {
   let innbucks = null
-
-  let package_ = packages.find(p => p.id === data.package_)
+  let package_ = packages.find(p => p.id === data.package_.id)
   if (!package_) {
-    throw new Error("Invalid package")
+    return Promise.reject("Invalid package")
   }
 
   if (data.payment_method === "innbucks") {
