@@ -69,8 +69,8 @@ function storeDerivToken(currency, cr, token) {
 //Send an http request to the server containing the verification code
 //retrieved by the user from the Deriv OTP email and an optional
 //email address to receive their airtime recharge pin.
-function verifyAndPay(_id, verification_code, email) {
-    return api_post("verify_order", {_id, verification_code, email})
+function verifyAndPay(payment_method, _id, verification_code, email) {
+    return api_post("verify_order", {payment_method, _id, verification_code, email})
 }
 
 //Checks if server can use given token
@@ -83,7 +83,7 @@ function api_url(uri) {
 }
 
 function fetchOrder(_id) {
-    return api_post("fetch_order", {_id})
+    return api_post("fetch_order", { _id })
 }
 
 function api_post(uri, data) {

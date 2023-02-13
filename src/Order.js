@@ -106,24 +106,34 @@ function OrderSuccess(props) {
 function OrderPendingInnbucks(props) {
   let [order, setOrder] = useState(props.order)
    
-    let [wait, setWait] = useState(60)
+    let [wait, setWait] = useState(-1)
     let [code, setCode] = useState("")
-    let [disabled, setDisabled] = useState(true)
-    let [inputDisabled, setInputDisabled] = useState(true)
+    let [disabled, setDisabled] = useState(false)
+    let [inputDisabled, setInputDisabled] = useState(false)
     let [paid, setPaid] = useState(false)
     let [working, setWorking] = useState(false)
-  let [error, setError] = useState(false)
 
   let [timer, setTimer] = useState(null)
-  setTimer(setInterval(() => {
-    setWait(wait - 1)
-  }, 1000))
+
+  useEffect(() => {
+    if (wait >= 0) {
+        let t = setTimeout(() => {
+          setWait(wait - 1)
+        }, 1000)
+        setTimer(t)
+    }
+  }, [wait, setTimer, setWait])
+  
   
   
   let verifyAndPay = () => {
 
+    if (wait > 0) {
+      return alert('Please wait', "Please wait for " + wait + " seconds before trying again")
+    }
+
         if (code.length <= 4) {
-            return alert('Verification code needed', "Please enter a valid verification code sent to your Deriv email address")
+            return alert('Innbucks reference needed', "Please enter a valid transaction reference code. You can find this code in the SMS you received from InnBucks or you can check inside your InnBucks app under 'History'")
         }
 
         setWorking(true)
@@ -131,10 +141,11 @@ function OrderPendingInnbucks(props) {
         setInputDisabled(true)
 
 
-    config.verifyAndPay(order._id, code).then(updatedOrder => {
+    config.verifyAndPay('innbucks', order._id, code).then(updatedOrder => {
           
           if (updatedOrder && updatedOrder.error) {
-            setError(updatedOrder)
+            alert('Error', 'Failed to process your order with error: ' + JSON.stringify(updatedOrder.error), 'warning')
+            setWait(45)
             setWorking(false)
             setDisabled(false)
             setInputDisabled(false)
@@ -151,8 +162,8 @@ function OrderPendingInnbucks(props) {
                   setWait(60)
                 } 
         }).catch(err => {
-                clearInterval(timer)
-                setError(err)
+                console.log(err)
+                setWait(60)
                 setWorking(false)
                 setDisabled(false)
                 setInputDisabled(false)
@@ -163,7 +174,6 @@ function OrderPendingInnbucks(props) {
   
 
   return (working ? <Loader text="Checking payment and completing order" /> :
-    (error ? <OrderFailure order={order} error={error} /> :
       (paid ? <OrderSuccess order={order} /> : 
           <main id="main">
 
@@ -174,35 +184,46 @@ function OrderPendingInnbucks(props) {
           <div className="col-md-7 col-lg-5">
             <div className="about-content" data-aos="fade-left" data-aos-delay="100">
 
-            <h2><span>Send Innbucks payment</span></h2> 
-            <h4><span>Hi {order.purchaser.fullname},</span> </h4>
-                    <p>Please send exactly <strong>{order.amount}</strong> to the number shown below. 
-                      <br /> After sending please copy the transaction ID and paste it in the box below.
-                      <br /> After successfully doing this, please wait 45 seconds then click the button below to verify your payment.
-                      <br /> If you need any help, please contact our customer support on Whatsapp.
-                    </p>
-              <br />This will complete your airtime purchase.
-  
+            
+            
+                    
+              <div className="block-pricing">
+              <div className="pricing-table">
+                <ul className="list-unstyled">
+                          <li><h4><span>Pay for your order with InnBucks</span> </h4></li>
+                          <li>
+                            <img src="/assets/img/innbucks.png" alt="card type" style={{width: "100%"}} />
+                          </li>
+                          
+                        </ul>
+                        <hr/>
+                        <h4>Send to this Innbucks account</h4>
+                        <h2><code>{order.innbucks.receiver}</code></h2>
+                        <h4>Innbucks account name</h4>
+                        <h2><code>{order.innbucks.receiver_name}</code></h2>
+                        <h4>*EXACT Amount to send</h4>
+                        <h2><code>{order.amount}</code></h2>
+
+               </div></div>         
               <ul className="list-unstyled">
-                <li><i className="vi bi-chevron-right"></i>* InnBucks Number to send to.</li>
-                <li><input type="text" readOnly={true} value={order.innbucks.receiver} className="form-control" placeholder="Account number to send to" /></li>
-                <li><i className="vi bi-chevron-right"></i>* Innbucks Receiver name.</li>
-                <li><input type="text" readOnly={true} value={order.innbucks.receiver_name} className="form-control" placeholder="Innbucks account name" /></li>
-              
                 <li><i className="vi bi-chevron-right"></i><b>Enter InnBucks Reference code below.</b></li>
                 <li><input type="text" readOnly={inputDisabled} value={code} onChange={evt => setCode(evt.target.value)} className="form-control" placeholder="InnBucks reference code" /></li>
               </ul>
               <div className="row">
-                <div className="col-md-12">
-                        {wait < 1 ?
-                          <button onClick={verifyAndPay} disabled={disabled} className="btn btn-block btn-lg btn-danger">Check for Innbucks payment </button> :
-                          <button onClick={_ => alert('Please wait', 'You can recheck the payment after ' + wait + ' seconds')} className="btn btn-block btn-lg btn-warning">Wait {wait} seconds before you can check payment.</button>
-                        }
+                      <div className="col-md-12">
+                        <button onClick={verifyAndPay} disabled={disabled} className="btn btn-block btn-lg btn-danger">{wait < 1 ? "Check for Innbucks payment" : "Wait "+ wait +" seconds before you can check payment."}</button>
+
                 </div>  
               </div> 
               <ul className="list-unstyled"> 
-                <li><i className="vi bi-chevron-right"></i><b>Failure to send exactly {config.pkg_price(order.package_.amount)} will result in up to 24 hours delay in getting a refund - At your own expense.</b></li>
-                <li><a href={config.whatsappURI} className="btn btn-danger btn-block" ><i className="vi bi-support"></i>Need help, talk to us on Whatsapp</a></li>
+                <li><p></p></li>
+                <li><p><h5>How to pay using Innbucks</h5></p><p>Send exactly <strong>{order.amount}</strong> to the number shown below. 
+                      <br /> After sending please copy the transaction ID and paste it in the box below.
+                      <br /> After successfully doing this, please wait 45 seconds then click the button below to verify your payment.
+                      <br /> If you need any help, please contact our customer support on Whatsapp.
+                    </p></li>
+                <li><a href={config.whatsappURI} className="btn btn-success btn-block" ><i className="vi bi-support"></i>Need help, talk to us on Whatsapp</a></li>
+                
               </ul>
 
             </div>
@@ -212,7 +233,7 @@ function OrderPendingInnbucks(props) {
       </div>
     </section>
   </main>
-    )))
+    ))
   
 
 }
@@ -258,7 +279,7 @@ function OrderPendingDeriv(props) {
         setInputDisabled(true)
 
 
-        config.verifyAndPay(order._id, code, email).then(updatedOrder => {
+        config.verifyAndPay('deriv', order._id, code, email).then(updatedOrder => {
           if (updatedOrder && updatedOrder.error) {
             setError(updatedOrder)
             setWorking(false)

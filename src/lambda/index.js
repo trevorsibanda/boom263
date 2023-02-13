@@ -49,6 +49,22 @@ const slackClient = new slack.WebClient(slackToken);
 
 const app = express();
 
+//available packages for sale
+const packages = [
+    {
+        id: "netone_mogigs",
+        name: 'Netone MoGigs US$10.00',
+        provider: "Netone",
+        amount: 10
+    },
+    {
+        id: "econet_10usd",
+        name: 'Econet US$10.00',
+        provider: "Econet",
+      amount: 10
+    }
+]
+
 
 function pkg_price(a) {
   return a.toFixed(2) * 1.1
@@ -77,7 +93,8 @@ async function send_order_email(order, stock) {
     }
   }
   sgMail.send(msg).catch(err => {
-    slack_activity("Error sending email: " + err + " " + JSON.stringify(msg))
+    console.log("Error sending email: " + JSON.stringify(err) + " " + JSON.stringify(msg))
+    slack_activity("Error sending email: " + JSON.stringify(err) + " " + JSON.stringify(msg))
   })
 }
 
@@ -104,6 +121,12 @@ async function slack_activity_user(user, text) {
 
 function createNewOrder(user, data) {
   let innbucks = null
+
+  let package_ = packages.find(p => p.id === data.package_)
+  if (!package_) {
+    throw new Error("Invalid package")
+  }
+
   if (data.payment_method === "innbucks") {
     innbucks = {
       receiver: innbucksAccount,
@@ -115,17 +138,17 @@ function createNewOrder(user, data) {
       "_id": "",
       "payment_method": data.payment_method,
       innbucks,
-      "package_": data.package_,
+      "package_": package_,
       "name": user.fullname,
       "cr": user.loginid,
       "email": user.email,
       "country": user.country,
 
       "purchaser": user,
-      "price":  pkg_price( data.price * data.quantity),
-      "quantity": data.quantity,
+      "price":  pkg_price( package_.amount * (data.quantity || 1)),
+      "quantity": data.quantity || 1,
       "created": f.Now(),
-      "amount": data.amount * data.quantity,
+      "amount": pkg_price( package_.amount * (data.quantity || 1)),
       "status": "pending"
     },
     ttl: f.TimeAdd(f.Now(), 2, "hours"), //non fulfilled orders expire after 2 hours 
@@ -141,7 +164,7 @@ function createNewOrder(user, data) {
 }
 
 function checkStockExists(package_) {
-  let query = f.Count(f.Match(stockPackageSearchIndex, package_)) //Map(Paginate(Match(Index("stockIndex"), "econet_usd1")), Lambda("v", Select("data", Get(Var("v")))))
+  let query = f.Count(f.Match(stockPackageSearchIndex, package_, "free")) //Map(Paginate(Match(Index("stockIndex"), "econet_usd1")), Lambda("v", Select("data", Get(Var("v")))))
   return dbClient.query(query).then(count => {
     if (count <= 0) {
       slack_msg(stockChannel, 'Out of stock for ' + package_)
@@ -162,25 +185,51 @@ function setOrderPaid(order, stock, amount) {
 }
 
 function setInnbucksPaymentUsed(fauna_ref, order_id) {
-  let query = f.Update(fauna_ref, { data: { "order_id": order_id } })
-  return dbClient.query(query)
+  let query = f.Update(fauna_ref, { data: { "order_id": order_id, status: 'used' } })
+  return dbClient.query(query).then(doc => {
+    console.log("Innbucks payment used: " + JSON.stringify(doc.data))
+    return doc.data
+  })
 }
 
 //todo: add remote check so we don't rely on database
-function checkInnbucksPayment(order_id, reference, expected) {
+function checkInnbucksPayment(order, body, derivBasicAPI, dry_run) {
+  let reference = body.verification_code
+  let expected = order.amount
+  let order_id = order._id
+
   let query = f.Select(["data", 0], f.Paginate(f.Match(innbucksRefIndex, reference)))
-  dbClient.query(query).then(doc => {
-    if (doc.data.amount === expected) {
+  return dbClient.query(f.Get(query)).then(doc => {
+
+    console.log("Innbucks payment check: " + JSON.stringify(doc.data))
+    if (doc.data.status === 'used') {
+      console.log("Innbucks payment already used: " + JSON.stringify(doc.data))
+      return Promise.resolve({
+        error: "Innbucks payment already used",
+        reason: "Innbucks payment already used: " + JSON.stringify(doc.data)
+      })
+    }
+    if (doc.data.amount && expected &&  doc.data.amount === expected) {
+      console.log("Customer paid " + expected + " for Innbucks " + reference)
+      slack_msg(activityChannel, "Customer paid " + expected + " for Innbucks " + reference)
       return setInnbucksPaymentUsed(doc.ref, order_id)
     } else if (doc.data.amount < expected) {
+      console.log("Customer underpaid. Expected " + expected + " but got " + doc.data.amount + " for Innbucks " + reference)
+      slack_msg(activityChannel, "Customer underpaid. Expected " + expected + " but got " + doc.data.amount + " for Innbucks " + reference)
       return Promise.reject({
         error: "Amount paid is less than expected",
         reason: "Expected " + expected + " but got " + doc.data.amount + " for Innbucks " + reference
       })
     } else if (doc.data.amount > expected) {
+      console.log("Customer overpaid. Expected " + expected + " but got " + doc.data.amount + " for Innbucks " + reference)
       slack_msg(activityChannel, "Customer overpaid. Expected " + expected + " but got " + doc.data.amount + " for Innbucks " + reference)
       //not a fatal error
       return doc.data
+    } else {
+      return Promise.reject({
+        error: "Programming error",
+        reason: "Innbucks payment: " + JSON.stringify(doc.data) + " does not match expected amount: " + expected + " for order " + order_id + " for Innbucks " + reference
+      })
     }
   })
 }
@@ -311,9 +360,10 @@ function retrieveOrder(order_id) {
     })
 }
 
-function paymentAgentDoWithdraw(derivBasicAPI, order, verification_code, dry_run = 1) {
-  let id = "".replace("_", " ")
-  let description = "Purchase " + id + " from Boom263"
+function paymentAgentDoWithdraw(order, body, derivBasicAPI, dry_run) {
+  let { verification_code } = body
+  
+  let description = "Purchase " + order.package_.id + " from Boom263"
   let currency = 'USD'
   let data = {amount: pkg_price_withdraw(order.package_.amount), currency, description, dry_run, paymentagent_withdraw: 1, paymentagent_loginid, verification_code}
   console.log("Payment agent processing withdrawal", data)
@@ -465,7 +515,14 @@ router.post('/fetch_order', (req, res) => {
 
 router.post('/verify_order', (req, res) => {
 
-    return retrieveOrder(req.body._id).then(order => {
+  return retrieveOrder(req.body._id).then(order => {
+      
+    if (order.status !== 'pending') {
+      res.jsonp({
+        error: 'Order is not pending'
+      })
+      return
+    }
 
     let auth = null
     switch (req.body.payment_method) {
@@ -494,22 +551,33 @@ router.post('/verify_order', (req, res) => {
           return Promise.resolve()
         } else {
           if (count < 10) {
-            slack_msg(stockChannel, 'Low stock for ' + order.package_.name + " - " + count + " left")
+            //slack_msg(stockChannel, 'Low stock for ' + order.package_.name + " - " + count + " left")
           }
 
           let payFunction = null
           switch (order.payment_method) {
-            case 'deriv':
-              payFunction = paymentAgentDoWithdraw(derivBasicAPI, order, req.body.verification_code, dry_run)
-              break;
             case 'innbucks':
-              payFunction = checkInnbucksPayment(order, req.body.verification_code)
+              payFunction = checkInnbucksPayment
               break;
             default:
-              payFunction = paymentAgentDoWithdraw(derivBasicAPI, order, req.body.verification_code, dry_run)
+              payFunction = paymentAgentDoWithdraw
               break;
           }
-          return payFunction.then(resp => {
+          return payFunction(order, req.body, derivBasicAPI, dry_run).then(resp => {
+
+            if (!resp ) {
+              res.jsonp({
+                error: 'Failed to verify payment',
+                reason: 'No response from payment agent'
+              })
+              return Promise.resolve()
+            } else if (resp && resp.error) {
+              res.jsonp({
+                error: 'Failed to verify payment',
+                reason: resp.error
+              })
+              return Promise.resolve()
+            }
 
             switch (order.payment_method) {
           
@@ -533,7 +601,7 @@ router.post('/verify_order', (req, res) => {
                 break;
 
             }
-            
+            console.log('here')
             //get one stock item from list
             return popStock(order.package_.id).then(stock => {
               console.log('Popped stock for order ' + order._id + " - " + JSON.stringify(stock))
@@ -562,7 +630,7 @@ router.post('/verify_order', (req, res) => {
               })
             })
           }).catch(err => {
-            slack_user_msg(req.user, salesChannel, "Failed to verify order for " + order.package_.name + " because of error: " + err.error.code + " - " + err.error.message)
+            slack_user_msg(req.user, salesChannel, "Failed to verify order for " + order.package_.name + " because of error: " + err)
           
             switch (order.payment_method) {
               case 'innbucks':
@@ -570,7 +638,7 @@ router.post('/verify_order', (req, res) => {
                 return
                 break;
               default:
-                if (err.error && err.error.code) {
+                if (err && err.error && err.error.code) {
                   res.jsonp({
                     error: 'Failed to withdraw funds from your Deriv account: ' + err.error.code,
                     reason: err.error.message
@@ -590,6 +658,7 @@ router.post('/verify_order', (req, res) => {
 
         }
       }).catch(err => {
+        console.log("Failed to check stock for order " + order._id + " with error: " + err)
         res.json({
           error: 'Failed to check stock',
           reason: err
