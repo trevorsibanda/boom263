@@ -164,7 +164,7 @@ function createNewOrder(user, data) {
 }
 
 function checkStockExists(package_) {
-  let query = f.Count(f.Match(stockPackageSearchIndex, package_, "free")) //Map(Paginate(Match(Index("stockIndex"), "econet_usd1")), Lambda("v", Select("data", Get(Var("v")))))
+  let query = f.Count(f.Match(stockStatusIndex, package_, "free")) //Map(Paginate(Match(Index("stockIndex"), "econet_usd1")), Lambda("v", Select("data", Get(Var("v")))))
   return dbClient.query(query).then(count => {
     if (count <= 0) {
       slack_msg(stockChannel, 'Out of stock for ' + package_)
