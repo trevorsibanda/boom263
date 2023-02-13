@@ -41,6 +41,10 @@ const innbucksRefIndex = f.Index("innbucksRefIndex")
 const innbucksUserIndex = f.Index("innbucksUserIndex")
 const innbucksAccount = process.env.INNBUCKS_ACCOUNT
 const innbucksAccountName = process.env.INNBUCKS_ACCOUNT_NAME
+const innbucksDetails = {
+  receiver: innbucksAccount,
+  receiver_name: innbucksAccountName,
+}
 
 const userLoginIdIndex = f.Index("userLoginIdIndex")
 const usersCollection = f.Collection("Users")
@@ -120,23 +124,16 @@ async function slack_activity_user(user, text) {
 }
 
 function createNewOrder(user, data) {
-  let innbucks = null
   let package_ = packages.find(p => p.id === data.package_.id)
   if (!package_) {
     return Promise.reject("Invalid package")
   }
 
-  if (data.payment_method === "innbucks") {
-    innbucks = {
-      receiver: innbucksAccount,
-      receiver_name: innbucksAccountName,
-    }
-  }
   var document = {
     data: {
       "_id": "",
       "payment_method": data.payment_method,
-      innbucks,
+      innbucks: innbucksDetails,
       "package_": package_,
       "name": user.fullname,
       "cr": user.loginid,
