@@ -3,9 +3,9 @@ import config from "./config";
 
 
 function Hero() {
-  let nowhere = "javascript:void(0)"
   let btnLink = config.checkLoggedIn() ? "/orders" : "/login"
-  let logout = () => {
+  let logout = (evt) => {
+    evt.preventDefault()
     config.logout()
   }
 
@@ -19,7 +19,7 @@ function Hero() {
       <div className="btns">
         <Link to="/orders"><i className="fa fa-apple fa-3x"></i> My Orders</Link>
         {config.checkLoggedIn() ?
-         <a href={nowhere} onClick={logout}><i className="fa fa-apple fa-3x"></i> Logout</a> :
+         <a href="/logout" onClick={logout}><i className="fa fa-apple fa-3x"></i> Logout</a> :
          <Link to="/about"><i className="fa fa-windows fa-3x"></i> Help and support</Link>    
         }
       </div>
