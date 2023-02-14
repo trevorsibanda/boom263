@@ -201,7 +201,7 @@ function OrderPendingInnbucks(props) {
               <div className="block-pricing">
               <div className="pricing-table">
                 <ul className="list-unstyled">
-                          <li><h4><span>Pay for {order.name} with InnBucks</span> </h4></li>
+                          <li><h4><span>Pay for {order.package_.name} with InnBucks</span> </h4></li>
                           <li>
                             <img src="/assets/img/innbucks.png" alt="card type" style={{width: "100%"}} />
                           </li>
