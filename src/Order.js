@@ -46,6 +46,16 @@ function OrderFailure(props) {
 }
 
 function OrderSuccess(props) {
+  let clipboardCopy = (e) => {
+    let el = e.target
+    let text = el.innerText
+    navigator.clipboard.writeText(text)
+    el.innerText = "Copied!"
+    setTimeout(() => {
+      el.innerText = text
+    }, 2000)
+  }
+  
     let { order } = props
     let {token} = order
     return (
@@ -75,7 +85,7 @@ function OrderSuccess(props) {
                         Click the button below to copy the recharge code to your clipboard.
                     </div>
                     <div className="col-md-12">
-                        <button className="btn btn-info btn-block">{token.ussd}</button>
+                        <a href={"tel:" + token.ussd} onClick={clipboardCopy} className="btn btn-info btn-block">{token.ussd}</a>
                     </div>
                   </div>
                 
@@ -191,7 +201,7 @@ function OrderPendingInnbucks(props) {
               <div className="block-pricing">
               <div className="pricing-table">
                 <ul className="list-unstyled">
-                          <li><h4><span>Pay for your order with InnBucks</span> </h4></li>
+                          <li><h4><span>Pay for {order.name} with InnBucks</span> </h4></li>
                           <li>
                             <img src="/assets/img/innbucks.png" alt="card type" style={{width: "100%"}} />
                           </li>
