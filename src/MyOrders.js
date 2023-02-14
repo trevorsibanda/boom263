@@ -2,6 +2,7 @@ import { useEffect, useState } from "react"
 import { Link } from "react-router-dom"
 import config from "./config"
 import Loader from "./Loader"
+import Money from "./Money"
 
 
 
@@ -9,6 +10,7 @@ export default function MyOrders(props) {
 
   let [loading, setLoading] = useState(true)
   let [orders, setOrders] = useState([])
+  let innbucksOrders = config.fetchInnbucksOrders()
 
 
   useEffect(() => {
@@ -50,12 +52,26 @@ export default function MyOrders(props) {
 
           <div className="col-md-7 col-lg-5">
             <div className="about-content" data-aos="fade-left" data-aos-delay="100">
+              <h2><span>Innbucks Orders</span> </h2>
+                  <p>Stored on your device's local storage.
+                    <b>Note that unpaid orders will be cancelled and deleted after 2 hours</b>
 
-              <h2><span>Past Orders</span> </h2>
-                  <p>Past orders are shown below.
-                    <b>Note that unpaid orders will be cancelled and deleted after 24 hours</b>
               </p>
 
+              <ul className="list-unstyled"> 
+                    {innbucksOrders.map(order => {
+                      return (<li><i className="vi bi-chevron-right"></i><Link to={"/order/" + order._id}><span class="text-danger">{order.package_.name}</span> for <Money value={order.amount} />.<br/>Created {order.created["@ts"]}<br />ID: {order._id}</Link></li>)
+                    })}
+                    
+                
+              </ul>
+              
+              <h2><span>Deriv Orders</span> </h2>
+                  <p>Past orders are shown below.
+                    <b>Note that unpaid orders will be cancelled and deleted after 2 hours</b>
+                    <br />
+                    <span>You must be logged in using Deriv to see your orders</span>
+              </p>
               <ul className="list-unstyled">
                     {orders.map(order => {
                       return (<li><i className="vi bi-chevron-right"></i><Link to={"/order/" + order._id}>{order_status[order.status]} {order.package_.name} for USD${order.package_.amount} <br />ID: {order._id}</Link></li>)

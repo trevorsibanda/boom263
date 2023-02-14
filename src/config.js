@@ -36,6 +36,19 @@ function localUser() {
     })
 }
 
+function fetchInnbucksOrders() {
+    let t = reactLocalStorage.getObject('innbucks_orders', {orders: []})
+    return t.orders.reverse()
+
+}
+
+function saveInnbucksOrder(order) {
+    let orders = fetchInnbucksOrders()
+    orders.push(order)
+    reactLocalStorage.setObject('innbucks_orders', {orders })
+}
+
+
 function setLocalUser(user) {
     reactLocalStorage.setObject('user', user)
 }
@@ -219,8 +232,10 @@ const config = {
     pkg_price: calculate_price,
     pastOrders,
     fetchOrder,
+    fetchInnbucksOrders,
     currentOrder,
     saveCurrentOrder,
+    saveInnbucksOrder,
     checkLoggedInRemote,
     localUser,
     setLocalUser,

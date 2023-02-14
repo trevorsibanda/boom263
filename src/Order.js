@@ -55,7 +55,7 @@ function OrderSuccess(props) {
       el.innerText = text
     }, 2000)
   }
-  
+
     let { order } = props
     let {token} = order
     return (
@@ -399,6 +399,9 @@ class NewOrder extends Component{
                 this.setState({ working: false, error: order.error })
                 alert('Failed to create new order', order.error, 'warning')
                 return
+              }
+              if (order.payment_method === 'innbucks') {
+                  config.saveInnbucksOrder(order)
                 }
                 config.saveCurrentOrder(order)
                 this.setState({order, working: false, success: true, redirect: "/order/"+order._id})
