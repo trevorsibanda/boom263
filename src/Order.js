@@ -2,6 +2,7 @@ import { Component, useEffect, useState } from "react"
 import { Link, Navigate } from "react-router-dom"
 import config from "./config"
 import Loader from "./Loader"
+import Money from "./Money"
 import withRouter from "./withRouter"
 
 
@@ -30,7 +31,7 @@ function OrderFailure(props) {
                 <li><i className="vi bi-chevron-right"></i><b>Package</b> {order && order.package_ ? order.package_.id : (order.id ? order.id : "NIL")}</li>
                 {props.pmethod ?
                   <li><i className="vi bi-chevron-right"></i><b>Payment Method</b> {props.pmethod}</li> : null}
-                <li><i className="vi bi-chevron-right"></i><b>Amount</b> {order && order.amount ? order.amount  : "???"}</li>
+                <li><i className="vi bi-chevron-right"></i><b>Amount</b> <Money value={order && order.amount ? order.amount  : NaN} /></li>
                 <li><a href={config.whatsappURI} className="btn btn-danger btn-block" ><i className="vi bi-support"></i>Need help, talk to us on Whatsapp</a></li>
               </ul>
 
@@ -88,7 +89,7 @@ function OrderSuccess(props) {
               <ul className="list-unstyled"> 
                 <li><i className="vi bi-chevron-right"></i>Order ID: <b>{order._id}</b></li>
                 <li><i className="vi bi-chevron-right"></i>Buyer account: <b>{order.purchaser.fullname}</b></li>
-                <li><i className="vi bi-chevron-right"></i>Amount Paid: <b>USD${order.amount_paid}</b></li>
+                <li><i className="vi bi-chevron-right"></i>Amount Paid: <b><Money value={order.amount_paid} /></b></li>
                 <li><i className="vi bi-chevron-right"></i>Time Paid: <b>{order.paidAt ? order.paidAt["@ts"] : "recently"}</b></li>
                     <li>Need help? <a href={config.whatsappURI} target="_blank" rel="noreferrer">Talk to our customer support on Whatsapp</a></li>
               </ul>
@@ -202,7 +203,7 @@ function OrderPendingInnbucks(props) {
                         <h4>Innbucks account name</h4>
                         <h2><code>{order.innbucks.receiver_name}</code></h2>
                         <h4>*EXACT Amount to send</h4>
-                        <h2><code>{order.amount}</code></h2>
+                        <h2><code><Money value={order.amount} /></code></h2>
 
                </div></div>         
               <ul className="list-unstyled">
@@ -211,13 +212,13 @@ function OrderPendingInnbucks(props) {
               </ul>
               <div className="row">
                       <div className="col-md-12">
-                        <button onClick={verifyAndPay} disabled={disabled} className="btn btn-block btn-lg btn-danger">{wait < 1 ? "Check for Innbucks payment" : "Wait "+ wait +" seconds before you can check payment."}</button>
+                      <button onClick={verifyAndPay} disabled={disabled} className="btn btn-block btn-lg btn-danger">{wait < 1 ? <>I have sent exactly <Money value={order.amount} /> </> : "Wait "+ wait +" seconds before you can check payment."}</button>
 
                 </div>  
               </div> 
               <ul className="list-unstyled"> 
                 <li><p></p></li>
-                <li><p><h5>How to pay using Innbucks</h5></p><p>Send exactly <strong>{order.amount}</strong> to the number shown below. 
+                <li><p><h5>How to pay using Innbucks</h5></p><p>Send exactly <strong><Money value={order.amount} /></strong> to the number shown below. 
                       <br /> After sending please copy the transaction ID and paste it in the box below.
                       <br /> After successfully doing this, please wait 45 seconds then click the button below to verify your payment.
                       <br /> If you need any help, please contact our customer support on Whatsapp.
@@ -321,7 +322,7 @@ function OrderPendingDeriv(props) {
                                 <p>Thank you for verifying this transaction, click the button below to process this transaction.
                 <br/>If successful, you will instantly see your airtime.                   
                       </p>
-                      <p>You are about to purchase {order.package_.name} for USD${config.pkg_price( order.package_.amount )} under Order #{order._id}</p>
+                      <p>You are about to purchase {order.package_.name} for <Money value={config.pkg_price( order.package_.amount )} /> under Order #{order._id}</p>
                                     </> : 
                                         
                                         <><h2><span>Check your email to complete this order</span> </h2> 
@@ -337,11 +338,11 @@ function OrderPendingDeriv(props) {
               </ul>
               <div className="row">
                 <div className="col-md-12">
-                    <button onClick={verifyAndPay} disabled={disabled} className="btn btn-block btn-lg btn-danger">Verify and buy {order.package_.name} for USD${config.pkg_price( order.package_.amount )}</button>    
+                    <button onClick={verifyAndPay} disabled={disabled} className="btn btn-block btn-lg btn-danger">Verify and buy {order.package_.name} for <Money value={config.pkg_price( order.package_.amount )} /></button>    
                 </div>  
               </div> 
               <ul className="list-unstyled"> 
-                <li><i className="vi bi-chevron-right"></i><b>You are paying USD${config.pkg_price(order.package_.amount)}</b></li>
+                <li><i className="vi bi-chevron-right"></i><b>You are paying <Money value={config.pkg_price(order.package_.amount)} /> </b></li>
                 <li><a href={config.whatsappURI} className="btn btn-danger btn-block" ><i className="vi bi-support"></i>Need help, talk to us on Whatsapp</a></li>
               </ul>
 

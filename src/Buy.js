@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import {Navigate} from "react-router-dom"
 import config from "./config";
 import Loader from "./Loader";
+import Money from "./Money";
 import withRouter from "./withRouter";
 
 
@@ -87,7 +88,7 @@ function Buy(props) {
                         <div className="pricing-table">
                             <h4>Buy {package_.name}</h4>
                             <p>{package_.description}</p>
-                            <h2>USD ${package_.amount}</h2>
+                            <h2><Money value={package_.amount} /></h2>
                             <ul className="list-unstyled">
                                 <li>
                                     <img src={"/assets/img/"+ package_.id + ".png"} alt="recharge card" style={{ maxWidth: "200px" }} />
@@ -115,7 +116,7 @@ function Buy(props) {
                                     </>
                                         : null}
                                 </li>
-                                <li>You will pay USD${config.pkg_price(package_.amount)} only</li>
+                                <li>You will pay <Money value={config.pkg_price(package_.amount)} /> only</li>
 
                             </ul>
                             <div className="table_btn">
