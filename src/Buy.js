@@ -116,12 +116,12 @@ function Buy(props) {
                                     </>
                                         : null}
                                 </li>
-                                <li>You will pay <Money value={config.pkg_price(package_.amount)} /> only</li>
+                                <li>Pay <Money value={config.pkg_price(pmethod,package_.amount)} /> only</li>
 
                             </ul>
                             <div className="table_btn">
                                 
-                                <button onClick={onPayClick} disabled={loading} className="btn btn-success"><i className="bi bi-cart"></i>Order {package_.name}</button>
+                                <button onClick={onPayClick} disabled={loading} className="btn btn-success"><i className="bi bi-cart"></i>Order {package_.name} for <Money value={config.pkg_price(pmethod,package_.amount)} /></button>
                                 
                             </div>
                         </div>

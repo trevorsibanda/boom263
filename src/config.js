@@ -1,8 +1,8 @@
 
 import {reactLocalStorage} from 'reactjs-localstorage';
  
-
-const devMode = false
+//check devmode from url
+const devMode = window.location.href.indexOf("localhost") > -1
 
 const derivTnc = "https://deriv.com/terms-and-conditions/#clients"
 const whatsappURI = "https://wa.me/263737065458?text=Boom263+Help"  
@@ -28,9 +28,27 @@ const packages = [
     ]}
 ]
 
+function localUser() {
+    return reactLocalStorage.getObject('user', {
+        fullname: 'Guest',
+        email: 'anonymous@boom263.co.zw',
+        phone: '0000000000',
+    })
+}
+
+function setLocalUser(user) {
+    reactLocalStorage.setObject('user', user)
+}
+
 //calculate package price
-function calculate_price(price) {
-    return price *  1.1
+function calculate_price(payment_method, price) {
+    if (payment_method === 'deriv') {
+        return price * 1.1
+    }
+    if (payment_method === 'innbucks') {
+        return price * 1.05
+    }
+    return price
 }
 
 function pastOrders() {
@@ -169,6 +187,14 @@ function refundOrder(order) {
     alert("Refund orders not yet implemented")
 }
 
+function logout() {
+    if (window.confirm("Are you sure you want to logout?")) {
+        clearDerivToken()
+        reactLocalStorage.clear()
+            window.location.reload()
+    }
+}
+
 const config = {
     packages,
     whatsappURI,
@@ -196,6 +222,9 @@ const config = {
     currentOrder,
     saveCurrentOrder,
     checkLoggedInRemote,
+    localUser,
+    setLocalUser,
+    logout,
     createNewOrder,
     checkLoggedIn,
     verifyAndPay,

@@ -17,7 +17,9 @@ import Login from './Login';
 import Admin from './Admin';
 
 
-function Boom263(){
+function Boom263() {
+  
+
     return (
       <BrowserRouter>
         

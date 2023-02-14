@@ -26,13 +26,13 @@ function OrderFailure(props) {
               </p>
 
               <ul className="list-unstyled">
-                <li><i className="vi bi-chevron-right"></i><b>REASON FAILED</b>: <pre>{ props.error && props.error.reason ? props.error.reason : JSON.stringify(props.error)}</pre></li>
+                <li><i className="vi bi-chevron-right"></i><b>REASON FAILED</b>: <p><code>{ props.error && props.error.reason ? props.error.reason : JSON.stringify(props.error)}</code></p></li>
                 <li><i className="vi bi-chevron-right"></i><b>OrderID</b> {order && order._id ? order._id : "--"}</li>
                 <li><i className="vi bi-chevron-right"></i><b>Package</b> {order && order.package_ ? order.package_.id : (order.id ? order.id : "NIL")}</li>
                 {props.pmethod ?
                   <li><i className="vi bi-chevron-right"></i><b>Payment Method</b> {props.pmethod}</li> : null}
                 <li><i className="vi bi-chevron-right"></i><b>Amount</b> <Money value={order && order.amount ? order.amount  : NaN} /></li>
-                <li><a href={config.whatsappURI} className="btn btn-danger btn-block" ><i className="vi bi-support"></i>Need help, talk to us on Whatsapp</a></li>
+                <li><a href={config.whatsappURI} className="btn btn-success btn-block" ><i className="vi bi-support"></i>Need help, talk to us on Whatsapp</a></li>
               </ul>
 
             </div>
@@ -322,7 +322,7 @@ function OrderPendingDeriv(props) {
                                 <p>Thank you for verifying this transaction, click the button below to process this transaction.
                 <br/>If successful, you will instantly see your airtime.                   
                       </p>
-                      <p>You are about to purchase {order.package_.name} for <Money value={config.pkg_price( order.package_.amount )} /> under Order #{order._id}</p>
+                      <p>You are about to purchase {order.package_.name} for <Money value={config.pkg_price('deriv', order.package_.amount )} /> under Order #{order._id}</p>
                                     </> : 
                                         
                                         <><h2><span>Check your email to complete this order</span> </h2> 
@@ -338,12 +338,12 @@ function OrderPendingDeriv(props) {
               </ul>
               <div className="row">
                 <div className="col-md-12">
-                    <button onClick={verifyAndPay} disabled={disabled} className="btn btn-block btn-lg btn-danger">Verify and buy {order.package_.name} for <Money value={config.pkg_price( order.package_.amount )} /></button>    
+                    <button onClick={verifyAndPay} disabled={disabled} className="btn btn-block btn-lg btn-danger">Verify and buy {order.package_.name} for <Money value={config.pkg_price('deriv', order.package_.amount )} /></button>    
                 </div>  
               </div> 
               <ul className="list-unstyled"> 
-                <li><i className="vi bi-chevron-right"></i><b>You are paying <Money value={config.pkg_price(order.package_.amount)} /> </b></li>
-                <li><a href={config.whatsappURI} className="btn btn-danger btn-block" ><i className="vi bi-support"></i>Need help, talk to us on Whatsapp</a></li>
+                <li><i className="vi bi-chevron-right"></i><b>You are paying <Money value={config.pkg_price('deriv', order.package_.amount)} /> </b></li>
+                <li><a href={config.whatsappURI} className="btn btn-success btn-block" ><i className="vi bi-support"></i>Need help, talk to us on Whatsapp</a></li>
               </ul>
 
             </div>
@@ -375,6 +375,12 @@ class NewOrder extends Component{
 
     componentDidMount() {
       let order = config.getPackage(this.props.package_)
+      if (config.currentOrder() === this.props.package_) {
+        alert('Cannot create new order', 'You already have an order for this package', 'warning')
+        this.setState({ working: false, success: true, redirect: '/packages' })
+      } else {
+        config.saveCurrentOrder(this.props.package_)
+      }
       console.log(order)
       if (order && order.id) {
             order.features = null

@@ -70,12 +70,11 @@ const packages = [
 ]
 
 
-function pkg_price(a) {
+function pkg_price(payment_method, a) {
+  if (payment_method === "innbucks") {
+    return a.toFixed(2) * 1.05
+  }
   return a.toFixed(2) * 1.1
-}
-
-function pkg_price_withdraw(a) {
-  return a.toFixed(2) * 1.04
 }
 
 async function send_order_email(order, stock) {
@@ -99,7 +98,7 @@ async function send_order_email(order, stock) {
   sgMail.send(msg).catch(err => {
     console.log("Error sending email: " + JSON.stringify(err) + " " + JSON.stringify(msg))
     slack_activity("Error sending email: " + JSON.stringify(err) + " " + JSON.stringify(msg))
-  })
+  }).then(console.log)
 }
 
 async function slack_msg(channel, text) {
@@ -141,10 +140,10 @@ function createNewOrder(user, data) {
       "country": user.country,
 
       "purchaser": user,
-      "price":  pkg_price( package_.amount * (data.quantity || 1)),
+      "price":  pkg_price(data.payment_method, package_.amount * (data.quantity || 1)),
       "quantity": data.quantity || 1,
       "created": f.Now(),
-      "amount": pkg_price( package_.amount * (data.quantity || 1)),
+      "amount": pkg_price(data.payment_method, package_.amount * (data.quantity || 1)),
       "status": "pending"
     },
     ttl: f.TimeAdd(f.Now(), 2, "hours"), //non fulfilled orders expire after 2 hours 
@@ -227,7 +226,10 @@ function checkInnbucksPayment(order, body, derivBasicAPI, dry_run) {
         reason: "Innbucks payment: " + JSON.stringify(doc.data) + " does not match expected amount: " + expected + " for order " + order_id + " for Innbucks " + reference
       })
     }
-  })
+  }).catch(err => Promise.reject({
+    error: "Innbucks payment error",
+    reason: "Innbucks payment error: " + JSON.stringify(err)
+  }))
 }
 
 
@@ -359,9 +361,9 @@ function retrieveOrder(order_id) {
 function paymentAgentDoWithdraw(order, body, derivBasicAPI, dry_run) {
   let { verification_code } = body
   
-  let description = "Purchase " + order.package_.id + " from Boom263"
+  let description = "Boom263 Purchase "
   let currency = 'USD'
-  let data = {amount: pkg_price_withdraw(order.package_.amount), currency, description, dry_run, paymentagent_withdraw: 1, paymentagent_loginid, verification_code}
+  let data = {amount: order.amount, currency, description, dry_run, paymentagent_withdraw: 1, paymentagent_loginid, verification_code}
   console.log("Payment agent processing withdrawal", data)
   return derivBasicAPI.paymentagentWithdraw(data)
 }
@@ -387,7 +389,7 @@ function withDerivAuth(req, res, callback) {
   }
   let token = req.body.deriv.token
   console.log("Authorize with " + token)
-  b.authorize({ authorize: token }).catch(err => {
+  return b.authorize({ authorize: token }).catch(err => {
     console.log("AUTH", err)
     res.jsonp({
       error: "Failed to authenticate user to Deriv"
@@ -479,11 +481,11 @@ router.post('/new_order', (req, res) => {
         })
             
       }).catch(err => {
-        res.json({
-          error: "Failed to create new order",
-          reason: JSON.stringify(err),
-        })
+      res.json({
+        error: "Failed to create order",
+        reason: JSON.stringify(err),
       })
+    })
     }).catch(err => {
       res.json({
         error: "Failed to check stock",
@@ -601,7 +603,7 @@ router.post('/verify_order', (req, res) => {
             //get one stock item from list
             return popStock(order.package_.id).then(stock => {
               console.log('Popped stock for order ' + order._id + " - " + JSON.stringify(stock))
-              return setOrderPaid(order, stock, pkg_price(order.package_.amount)).then(document => {
+              return setOrderPaid(order, stock, order.amount).then(document => {
                 send_order_email(order, stock)
                 console.log("Updated and set order " + order._id + " to paid")
                 slack_user_msg(req.user, salesChannel, "Order " + order._id + " for " + order.package_.name + " is now paid. Recharge token is " + stock.pretty)
