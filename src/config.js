@@ -25,7 +25,36 @@ const packages = [
         amount: 10, features: [
         <>Econet <b>USD Airtime</b></>,
         <>Instant Recharge</>,
-    ]}
+        ]
+    },
+    {
+        id: "econet_1usd",
+        name: 'Econet US$1.00',
+        provider: "Econet",
+        amount: 1, features: [
+            <>Econet <b>USD Airtime</b></>,
+            <>Instant Recharge</>,
+        ]
+    },
+    {
+        id: "econet_5usd",
+        name: 'Econet US$5.00',
+        provider: "Econet",
+        amount: 5, features: [
+            <>Econet <b>USD Airtime</b></>,
+            <>Instant Recharge</>,
+        ]
+    },
+    {
+        id: "netone_1usd",
+        name: 'Netone US$1.00',
+        provider: "Netone",
+        amount: 1, features: [
+            <>Netone <b>USD Airtime</b></>,
+            <>Instant Recharge</>,
+        ]
+    },
+    
 ]
 
 function localUser() {
