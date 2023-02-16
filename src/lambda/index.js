@@ -81,7 +81,7 @@ function withInnbucksAuth(retry = true) {
       data: {
         value: token,
       },
-      ttl: f.TimeAdd(f.Now(), 60, "minutes") 
+      ttl: f.TimeAdd(f.Now(), 60,  "seconds") 
     })
       return dbClient.query(query).then(doc => {
         return Promise.resolve(token)
@@ -172,7 +172,7 @@ function innbucksLogin() {
   }).then(json => {
     
     if (json.accessToken) {
-      dbClient.query(f.Create(configCollection, {data: {key: "innbucks_api_token", value: json.accessToken}, ttl: f.TimeAdd(f.Now(), 60, "minutes")})).then(console.log).catch(console.log)
+      dbClient.query(f.Create(configCollection, {data: {key: "innbucks_api_token", value: json.accessToken}, ttl: f.TimeAdd(f.Now(), 60, "seconds")})).then(console.log).catch(console.log)
       return Promise.resolve(json.accessToken)
     } else {
       
