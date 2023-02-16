@@ -36,6 +36,10 @@ function Buy(props) {
             return
         }
 
+        if (package__.amount < 10) {
+            setPmethod("innbucks")
+        }
+
         setPackage_(package__)
 
         setLoading(false)
@@ -100,7 +104,9 @@ function Buy(props) {
                                     <label>Payment method</label>
                                     <select value={pmethod} onChange={evt => setPmethod(evt.target.value)} className="form-control" id="payment_method">
                                     <option value={"innbucks"} >InnBucks</option>
-                                    <option value={"deriv"} >Deriv Balance</option>
+                                    { package_.amount >= 10 ?
+                                        <option value={"deriv"} >Deriv Balance</option> : null
+                                    }
                                     </select>
                                 {pmethod === "deriv" ? <>
                                     <strong>Paying with Deriv:</strong>
