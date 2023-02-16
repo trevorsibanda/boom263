@@ -5,7 +5,7 @@ const express = require('express');
 const path = require('path');
 const serverless = require('serverless-http');
 const DerivAPI = require('@deriv/deriv-api/dist/DerivAPI');
-
+const axios = require('axios')
 const paymentMethods = ["deriv", "innbucks"]
 
 
@@ -39,12 +39,20 @@ const stockStatusIndex = f.Index("statusStockIndex")
 const innbucksTXCollection = f.Collection("innbucksTx")
 const innbucksRefIndex = f.Index("innbucksRefIndex")
 const innbucksUserIndex = f.Index("innbucksUserIndex")
+
+const configCollection = f.Collection("Config")
+const configKeyIndex = f.Index("configKeyIndex")
+
 const innbucksAccount = process.env.INNBUCKS_ACCOUNT
+const innbucksUsername = process.env.INNBUCKS_USERNAME
+const innbucksPasscode = process.env.INNBUCKS_PASSCODE
 const innbucksAccountName = process.env.INNBUCKS_ACCOUNT_NAME
 const innbucksDetails = {
   receiver: innbucksAccount,
   receiver_name: innbucksAccountName,
 }
+const innbucksLoginURL = "https://gateway.bulkit.co.zw/auth/login"
+const innbucksHistoryURL = "https://gateway.bulkit.co.zw/api/transaction/account/3005088255774/miniStatement"
 
 const userLoginIdIndex = f.Index("userLoginIdIndex")
 const usersCollection = f.Collection("Users")
@@ -52,6 +60,129 @@ const usersCollection = f.Collection("Users")
 const slackClient = new slack.WebClient(slackToken);
 
 const app = express();
+
+
+function lookupLastInnbucksApiToken() {
+  let query = f.Get(f.Match(f.Index("configKeyIndex"), "innbucks_api_token"))
+  return dbClient.query(query).then(doc => {
+    slack_activity("Using innbucks token from database :: " + doc.data.value)
+    return doc.data.value
+  }).catch(err => {
+    slack_activity("No innbucks token in config. Probably expired. Logging in")
+    //do http request to innbucks to get token
+    return withInnbucksAuth(false)
+  })
+}
+
+function withInnbucksAuth(retry = true) {
+  return innbucksLogin().then(token => {
+    //insert if it doesnt exist
+    let query = f.Update(f.Match(f.Index("configKeyIndex"), "innbucks_api_token"), {
+      data: {
+        value: token,
+      },
+      ttl: f.TimeAdd(f.Now(), 60, "seconds") 
+    })
+      return dbClient.query(query).then(doc => {
+        return Promise.resolve(token)
+      }).catch(_ => {
+        return Promise.resolve(token)
+      })
+  }).catch(err => {
+    
+    if (retry) {
+      console.log("Retrying innbucks auth login")
+      return withInnbucksAuth(false)
+    } else {
+      
+      return Promise.reject(err)
+      }
+    })
+
+}
+
+
+function innbucksFetchRecentRemoteHistory(token) {
+  //sends an http request to innbucksHistoryUrl, parses the response to get the amount, operation, time and then
+  // stores this info into the database under the innbucksTx collection checking if the transaction already exists
+  // if it does, it ignores the transaction
+  // if it doesnt, it inserts the transaction
+  
+
+  return axios.get(innbucksHistoryURL, {
+    headers: {
+      "Authorization": "Bearer " + token,
+      "Content-Type": "application/json",
+      "User-Agent": "Dalvik/2.1.0 (Linux; U; Android 12; SM-A516N Build/SP1A.210812.016)"
+    }
+  }).then(resp => {
+    let json = resp.data
+    
+    let { transactions } = json
+    slack_activity("Innbucks history retrieved for account " + (json.accountNumber) +  " with balance: $" + (json.balance/100) + " and " + transactions.length + " transactions")
+    slack_activity("Innbucks history response: " + JSON.stringify(transactions))
+
+    //loop over all transactions and insert if it exists
+    transactions.forEach(tx => {
+      tx.amount = tx.amount/100
+      dbClient.query(f.Create(innbucksTXCollection, {
+        data: tx
+      })).then(_ => {
+        console.log("inserted innbucks transaction: " + JSON.stringify(tx))
+      }).catch(err => {
+        console.log("error inserting innbucks transaction: " + JSON.stringify(err))
+
+      })
+    })
+
+    return Promise.resolve(transactions)
+  }).catch(err => {
+    
+    console.log(token, err)
+    slack_activity("Innbucks upstream history error: " + JSON.stringify(err))
+    return Promise.reject(err)
+  })
+
+}
+
+
+function innbucksLogin() {
+  //send an http post to innbucksLoginURL with username and password encoded as a form
+  let query = f.Get(f.Match(configKeyIndex, "innbucks_api_token"))
+  return dbClient.query(query).then(doc => {
+    
+    return Promise.resolve(doc.data.value)
+  }).catch(err => {
+    console.log('innbucks remote login with err : ' + err)
+    const form = {
+  "username": innbucksUsername,
+  "deviceId": "samsungSM-A516N12S166bfbe8-f83b-8950-b794-e8e6e00b549f",
+  "pinBlock": innbucksPasscode
+  }
+  
+  let headers= {
+      "Content-Type": "application/json",
+      "User-Agent": "Dalvik/2.1.0 (Linux; U; Android 12; SM-A516N Build/SP1A.210812.016)"
+  }
+  
+  return axios.default.post(innbucksLoginURL, form, { headers }).then(res => {
+    
+    slack_activity("Raw Innbucks login response: " + JSON.stringify(res.data))
+    return res.data
+  }).then(json => {
+    
+    if (json.accessToken) {
+      dbClient.query(f.Create(configCollection, {data: {key: "innbucks_api_token", value: json.accessToken}, ttl: f.TimeAdd(f.Now(), 60, "seconds")})).then(console.log).catch(console.log)
+      return Promise.resolve(json.accessToken)
+    } else {
+      
+      slack_activity("Innbucks login failed: " + JSON.stringify(json))
+      return Promise.reject(json)
+    }
+  })
+  })
+
+}
 
 //available packages for sale
 const packages = [
@@ -66,7 +197,28 @@ const packages = [
         name: 'Econet US$10.00',
         provider: "Econet",
       amount: 10
-    }
+  }, 
+  {
+    id: "econet_1usd",
+    name: 'Econet US$1.00',
+    provider: "Econet",
+    amount: 1
+    
+  },
+  {
+    id: "econet_5usd",
+    name: 'Econet US$5.00',
+    provider: "Econet",
+    amount: 5
+    
+  },
+  {
+    id: "netone_1usd",
+    name: 'Netone US$1.00',
+    provider: "Netone",
+    amount: 1
+    
+    },
 ]
 
 
@@ -188,25 +340,34 @@ function setInnbucksPaymentUsed(fauna_ref, order_id) {
 }
 
 //todo: add remote check so we don't rely on database
-function checkInnbucksPayment(order, body, derivBasicAPI, dry_run) {
+function checkInnbucksPayment(order, body, recent_history = [], dont_retry = true) {
   let reference = body.verification_code
   let expected = order.amount
   let order_id = order._id
 
-  let query = f.Select(["data", 0], f.Paginate(f.Match(innbucksRefIndex, reference)))
-  return dbClient.query(f.Get(query)).then(doc => {
-
+  let query = f.Get(f.Match(innbucksRefIndex, reference))
+  
+  return dbClient.query(query).then(doc => {
     console.log("Innbucks payment check: " + JSON.stringify(doc.data))
+    if (doc.data.type !== "Credit") {
+      return Promise.reject({
+        error: "Given Innbucks reference is not a deposit",
+        reason: "Only provide reference for money received."
+      })
+    }
     if (doc.data.status === 'used') {
       console.log("Innbucks payment already used: " + JSON.stringify(doc.data))
-      return Promise.resolve({
+      return Promise.reject({
         error: "Innbucks payment already used",
         reason: "Innbucks payment already used: " + JSON.stringify(doc.data)
       })
     }
+    doc.data.amount = parseFloat(doc.data.amount)
     if (doc.data.amount && expected &&  doc.data.amount === expected) {
       console.log("Customer paid " + expected + " for Innbucks " + reference)
-      slack_msg(activityChannel, "Customer paid " + expected + " for Innbucks " + reference)
+      let customer = (doc.data.counterPartyFirstName || "") + " " + (doc.data.counterPartyLastName || "")
+      slack_msg(activityChannel, "Customer paid " + expected + " for Innbucks " + reference + " Payer: " + customer)
+      
       return setInnbucksPaymentUsed(doc.ref, order_id)
     } else if (doc.data.amount < expected) {
       console.log("Customer underpaid. Expected " + expected + " but got " + doc.data.amount + " for Innbucks " + reference)
@@ -226,10 +387,23 @@ function checkInnbucksPayment(order, body, derivBasicAPI, dry_run) {
         reason: "Innbucks payment: " + JSON.stringify(doc.data) + " does not match expected amount: " + expected + " for order " + order_id + " for Innbucks " + reference
       })
     }
-  }).catch(err => Promise.reject({
-    error: "Innbucks payment error",
-    reason: "Innbucks payment error: " + JSON.stringify(err)
-  }))
+  }).catch(err => {
+    console.log("EEEERRRRRROOOOORRRR" + JSON.stringify(err))
+    if (!dont_retry) {
+      return withInnbucksAuth(true).then(token => {
+
+        return innbucksFetchRecentRemoteHistory(token).then(history => {
+          console.log("Got history "+ JSON.stringify(history))
+          return checkInnbucksPayment(order, body, history, true)
+        }).catch(console.log)
+      }).catch(console.log)  
+    } else {
+      return Promise.reject({
+        error: "Innbucks payment not found",
+        reason: "Innbucks payment error: " + JSON.stringify(err)
+      })
+    }
+  })
 }
 
 
@@ -599,7 +773,7 @@ router.post('/verify_order', (req, res) => {
                 break;
 
             }
-            console.log('here')
+            
             //get one stock item from list
             return popStock(order.package_.id).then(stock => {
               console.log('Popped stock for order ' + order._id + " - " + JSON.stringify(stock))
