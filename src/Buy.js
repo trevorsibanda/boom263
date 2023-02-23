@@ -45,14 +45,14 @@ function Buy(props) {
         setLoading(false)
     }
 
-    let checkLogin = () => {
-        if (!config.checkLoggedIn()) {
-            config.setPostLogin('/buy/' + package_.id)
-            setRedirectToLogin(true)
-        }
-    }
-
     let onPayClick = () => {
+        if (pmethod === "deriv" && !config.checkLoggedIn()) {
+            alert("Login required", "You need to login to pay using Deriv.", "info")
+            setTimeout(() => {
+                setRedirectToLogin(true)
+            }, 2500)
+            return
+        }
         setLoading(true)
         setLoadingMsg("Creating order for " + package_.name + "paying using " + pmethod)
         config.setPostLogin('/buy/' + package_.id)
@@ -78,7 +78,7 @@ function Buy(props) {
     
 
     useEffect(() => {
-        checkLogin()
+        
         loadPkg()
         })
 
