@@ -47,7 +47,7 @@ function Buy(props) {
 
     let onPayClick = () => {
         if (pmethod === "deriv" && !config.checkLoggedIn()) {
-            alert("Login required", "You need to login to pay using Deriv.", "info")
+            alert("Login required", "Login to Deriv to pay using your Deriv balance.", "info")
             setTimeout(() => {
                 setRedirectToLogin(true)
             }, 2500)

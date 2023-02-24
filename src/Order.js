@@ -377,7 +377,7 @@ class NewOrder extends Component{
       }
         
         this.state = {
-          working: true, success: false, order, loggedIn: config.checkLoggedIn(), error: '',
+          working: true, success: false, order, error: '',
           paymentMethod: props.pmethod
         }
       
@@ -417,9 +417,9 @@ class NewOrder extends Component{
     }
 
     render() {
-      return this.state.loggedIn ? (this.state.working ? <Loader text={"Creating order for " + this.props.package_ + " paying using " + this.state.paymentMethod  } /> : (this.state.success ?
+      return (this.state.working ? <Loader text={"Creating order for " + this.props.package_ + " paying using " + this.state.paymentMethod  } /> : (this.state.success ?
             <Navigate to={this.state.redirect} /> :
-            <OrderFailure reason={"Failed to create new order"} pmethod={this.state.paymentMethod} error={this.state.error} order={this.state.order} />)) : <Navigate to="/login" /> 
+            <OrderFailure reason={"Failed to create new order"} pmethod={this.state.paymentMethod} error={this.state.error} order={this.state.order} />))
     }
     
 }
