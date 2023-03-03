@@ -201,7 +201,8 @@ function OrderPendingInnbucks(props) {
               <div className="block-pricing">
               <div className="pricing-table">
                 <ul className="list-unstyled">
-                          <li><h4><span>Pay for {order.package_.name} with InnBucks</span> </h4></li>
+                        <li><h4><span>Pay for {order.package_.name} with InnBucks</span> </h4></li>
+                        <li><p>Order#: <code>{order._id}</code></p></li>
                           <li>
                             <img src="/assets/img/innbucks.png" alt="card type" style={{width: "100%"}} />
                           </li>
@@ -214,6 +215,7 @@ function OrderPendingInnbucks(props) {
                         <h2><code>{order.innbucks.receiver_name}</code></h2>
                         <h4>*EXACT Amount to send</h4>
                         <h2><code><Money value={order.amount} /></code></h2>
+                        
 
                </div></div>         
               <ul className="list-unstyled">
@@ -228,10 +230,11 @@ function OrderPendingInnbucks(props) {
               </div> 
               <ul className="list-unstyled"> 
                 <li><p></p></li>
-                <li><p><h5>How to pay using Innbucks</h5></p><p>Send exactly <strong><Money value={order.amount} /></strong> to the number shown below. 
-                      <br /> After sending please copy the transaction ID and paste it in the box below.
-                      <br /> After successfully doing this, please wait 45 seconds then click the button below to verify your payment.
-                      <br /> If you need any help, please contact our customer support on Whatsapp.
+                    <li><p><h5>How to pay using Innbucks</h5></p><p>Send *exactly <strong><Money value={order.amount} /></strong> to the number shown below. 
+                      <br /> After sending please copy the transaction ID and paste it in the box above.
+                      <br /> After successfully doing this, please click on the button above to verify your payment.
+                      <br /> Sometimes it takes a while for the payment to reflect, if you get an error after retrying at least 3 times, please contact support.
+                      <br /> If you need any other help, please contact our customer support on Whatsapp.
                     </p></li>
                 <li><a href={config.whatsappURI} className="btn btn-success btn-block" ><i className="vi bi-support"></i>Need help, talk to us on Whatsapp</a></li>
                 

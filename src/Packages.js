@@ -16,7 +16,10 @@ function Package(props) {
                         })
                         }
                     <li>Save up to 15% and time using an automated service</li>
-              <li>Pay <Money value={config.pkg_price('innbucks', props.p.amount)} /> for Innucks / <Money value={config.pkg_price('deriv', props.p.amount)} /> for Deriv</li>
+              <li>Pay <Money value={config.pkg_price('innbucks', props.p.amount)} /> using Innucks
+                { props.p.amount >= 10 ?
+                  <>/ <Money value={config.pkg_price('deriv', props.p.amount)} / > using Deriv</> : <></>
+                }</li>
                 </ul>
                 <div className="table_btn">
                     <Link to={"/buy/" + props.p.id} className="btn"><i className="bi bi-cart"></i> Buy now</Link>

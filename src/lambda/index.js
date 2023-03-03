@@ -58,6 +58,8 @@ const userLoginIdIndex = f.Index("userLoginIdIndex")
 const usersCollection = f.Collection("Users")
 
 const slackClient = new slack.WebClient(slackToken);
+const sgMail = require('@sendgrid/mail');
+sgMail.setApiKey(SENDGRID_API_KEY);
 
 const app = express();
 
@@ -81,7 +83,7 @@ function withInnbucksAuth(retry = true) {
       data: {
         value: token,
       },
-      ttl: f.TimeAdd(f.Now(), 60,  "seconds") 
+      ttl: f.TimeAdd(f.Now(), 120,  "seconds") 
     })
       return dbClient.query(query).then(doc => {
         return Promise.resolve(token)
@@ -230,8 +232,7 @@ function pkg_price(payment_method, a) {
 }
 
 async function send_order_email(order, stock) {
-  const sgMail = require('@sendgrid/mail');
-  sgMail.setApiKey(SENDGRID_API_KEY);
+  
   let msg = {
     to: order.email,
     from: ORDERS_EMAIL,
@@ -298,7 +299,7 @@ function createNewOrder(user, data) {
       "amount": pkg_price(data.payment_method, package_.amount * (data.quantity || 1)),
       "status": "pending"
     },
-    ttl: f.TimeAdd(f.Now(), 2, "hours"), //non fulfilled orders expire after 2 hours 
+    ttl: f.TimeAdd(f.Now(), 6, "hours"), //non fulfilled orders expire after 2 hours 
   }
 
   return dbClient.query(f.Create(ordersCollection, document)).then(doc => {

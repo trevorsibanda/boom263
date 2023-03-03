@@ -40,7 +40,7 @@ export default function About(props) {
                     We support the following payment methods:
                     <ul>
                       <li>Deriv</li>
-                      <li>InnBucks <sup><b>Coming soon</b></sup></li>
+                      <li>InnBucks <sup><b className="text-danger">NOW LIVE !</b></sup></li>
                     </ul>
                     <br />
                     For more information, please contact us by <a href={config.whatsappURI}>Email or WhatsApp</a>
