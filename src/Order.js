@@ -230,8 +230,8 @@ function OrderPendingInnbucks(props) {
               </div> 
               <ul className="list-unstyled"> 
                 <li><p></p></li>
-                    <li><p><h5>How to pay using Innbucks</h5></p><p>Send *exactly <strong><Money value={order.amount} /></strong> to the number shown below. 
-                      <br /> After sending please copy the transaction ID and paste it in the box above.
+                    <li><p><h5>How to pay using Innbucks</h5></p><p>Send *exactly <strong><Money value={order.amount} /></strong> to <code>{order.innbucks.receiver}</code>. 
+                      <br /> After sending please copy the <i><b>Innbucks ref code</b></i> and paste it in the box above.
                       <br /> After successfully doing this, please click on the button above to verify your payment.
                       <br /> Sometimes it takes a while for the payment to reflect, if you get an error after retrying at least 3 times, please contact support.
                       <br /> If you need any other help, please contact our customer support on Whatsapp.
