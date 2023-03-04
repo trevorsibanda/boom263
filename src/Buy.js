@@ -122,6 +122,7 @@ function Buy(props) {
                                     </>
                                         : null}
                                 </li>
+                                
                                 <li>Pay <Money value={config.pkg_price(pmethod,package_.amount)} /> only</li>
 
                             </ul>
