@@ -35,7 +35,7 @@ function Buy(props) {
             setRedirectToOrder(true)
             return
         }
-
+        window.pageview("Buy "+ package__.name + " for " + config.moneyFormat(config.pkg_price(pmethod,package_.amount)))
         if (package__.amount < 10) {
             setPmethod("innbucks")
         }
@@ -143,6 +143,7 @@ function Buy(props) {
     }
 
     if (redirectToLogin) {
+        window.event("Redirect", "Login", "Buy")
         component = <Navigate to="/login" />
     }
 

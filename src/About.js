@@ -1,3 +1,4 @@
+import { useEffect } from "react"
 import config from "./config"
 import Loader from "./Loader"
 
@@ -9,6 +10,10 @@ function takeMeTo(url) {
 
 
 export default function About(props) {
+
+  useEffect(_ => {
+    window.pageview("About Boom263")
+  })
 
   if (props.whatsapp === true) {
       console.log(props)

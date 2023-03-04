@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import config from "./config"
 
 function ListOrders(props) {
@@ -279,6 +279,10 @@ function ListStock() {
 export default function Admin(props) {
 
     let [apiKey, setApiKey] = useState(config.admin.getApiKey())
+
+    useEffect(_ => {
+        window.pageview("Boom263 Admin")
+    })
     
 
     let stockReport = () => {

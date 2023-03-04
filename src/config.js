@@ -11,6 +11,16 @@ const supportEmail = "support@boom263.co.zw"
 //available packages for sale
 const packages = [
     {
+        id: "custom_econet",
+        name: "Custom Econet",
+        provider: "Econet/NetOne",
+        amount: "custom",
+        features: [
+        <>Buy <b>any amount</b></>,
+        <>Instant Recharge</>,
+    ]
+    },
+    {
         id: "netone_mogigs",
         name: 'Netone MoGigs US$10.00',
         provider: "Netone",
@@ -56,6 +66,13 @@ const packages = [
     },
     
 ]
+
+const moneyFormat = (value) =>
+  new Intl.NumberFormat('en-ZW', {
+    style: 'currency',
+    currency: 'USD'
+  }).format(value);
+
 
 function localUser() {
     return reactLocalStorage.getObject('user', {
@@ -239,6 +256,7 @@ function logout() {
 
 const config = {
     packages,
+    moneyFormat,
     whatsappURI,
     supportEmail,
     derivTnc,

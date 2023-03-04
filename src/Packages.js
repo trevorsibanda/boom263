@@ -1,3 +1,4 @@
+import { useEffect } from "react"
 import { Link } from "react-router-dom"
 import config from "./config"
 import Money from "./Money"
@@ -33,6 +34,11 @@ function Package(props) {
 
 
 export default function Packages(props) {
+
+  useEffect(_ => {
+      window.pageview("Available Packages")
+      
+    })
     return (
     <section id="pricing" className="padd-section text-cente">
 

@@ -395,6 +395,7 @@ class NewOrder extends Component{
         config.saveCurrentOrder(this.props.package_)
       }
       console.log(order)
+      window.pageview("Creating new order...")
       if (order && order.id) {
             order.features = null
             config.createNewOrder(order, this.state.paymentMethod, 1).then(order => {
@@ -467,6 +468,7 @@ function Order(props) {
     let page = <></>
     if (order && props.params.id !== "new" && !loading) {
       if (order.status === 'pending') {
+        window.pageview("Pay for "+ order.package_.name + "#" + order._id +" using " + order.payment_method)
         if (order.payment_method === 'innbucks') {
           page = <OrderPendingInnbucks order={order} />
         }
@@ -475,9 +477,11 @@ function Order(props) {
         } else {
           page = <OrderFailure order={order} error={{error: "Unsupported payment method "}} />
         }
-        } else if (order.status === 'cancelled') {
+      } else if (order.status === 'cancelled') {
+            window.pageview("Cancelled order "+ order.package_.name + "#" + order._id +" using " + order.payment_method)
             page = <OrderFailure order={order} error={error} />
-        } else if (order.status === 'paid') {
+      } else if (order.status === 'paid') {
+            window.pageview("Completed Order: "+ order.package_.name + "#" + order._id +" using " + order.payment_method)
             page = <OrderSuccess order={order} />
         }
     }

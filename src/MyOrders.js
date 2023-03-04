@@ -14,6 +14,7 @@ export default function MyOrders(props) {
 
 
   useEffect(() => {
+    window.pageview("My Orders")
     load()
   }, [])
 

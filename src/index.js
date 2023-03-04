@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import ReactGA from 'react-ga';
 import './index.css';
 import App from './App';
 
@@ -16,8 +17,24 @@ import About from './About';
 import Login from './Login';
 import Admin from './Admin';
 
+ReactGA.initialize('G-C160G1BYQP');
+
+window.pageview = (title) => {
+  document.title = title + " - Boom263"
+  ReactGA.pageview(window.location.href)
+}
+
+window.event = (category, action, label) => {
+  ReactGA.event({
+    category,
+    action,
+    label
+  })
+}
 
 function Boom263() {
+  
+  
   
 
     return (
@@ -49,12 +66,12 @@ function Boom263() {
 
 let nativeAlert = window.alert
 window.alert = (title, text, mode, timer) => {
+  window.event("Modal", text, title)
   if (window.Swal) {
     window.Swal.fire({title, text, icon: mode, timer})
   } else {
     nativeAlert(mode + ":"+ title + "\n\n"+text)
   }
-  
 }
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
@@ -63,6 +80,11 @@ root.render(
 
 
 function Page404(props) {
+  useEffect(_ => {
+    window.pageview("404 Not Found")
+    window.event("Miss", window.location.href, "404")
+  })
+  
     return (
           <main id="main" style={{marginTop:"100px"}}>
 
