@@ -61,7 +61,7 @@ export default function MyOrders(props) {
 
               <ul className="list-unstyled"> 
                     {innbucksOrders.map(order => {
-                      return (<li><i className="vi bi-chevron-right"></i><Link to={"/order/" + order._id}><span class="text-danger">{order.package_.name}</span> for <Money value={order.amount} />.<br/>Created {order.created["@ts"]}<br />ID: {order._id}</Link></li>)
+                      return (<li><i className="vi bi-chevron-right"></i><Link to={"/order/" + order._id}><span class="text-danger">{order.quantity} x {order.package_.name}</span> for <Money value={order.amount} />.<br/>Created {order.created["@ts"]}<br />ID: {order._id}</Link></li>)
                     })}
                     
                 

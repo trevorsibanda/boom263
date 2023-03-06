@@ -1,5 +1,5 @@
-import { Component, useEffect, useState } from "react"
-import { Link, Navigate } from "react-router-dom"
+import {useEffect, useState } from "react"
+import { Link} from "react-router-dom"
 import config from "./config"
 import Loader from "./Loader"
 import Money from "./Money"
@@ -32,7 +32,7 @@ function OrderFailure(props) {
                 {props.pmethod ?
                   <li><i className="vi bi-chevron-right"></i><b>Payment Method</b> {props.pmethod}</li> : null}
                 <li><i className="vi bi-chevron-right"></i><b>Amount</b> <Money value={order && order.amount ? order.amount  : NaN} /></li>
-                <li><a href={config.whatsappURI} className="btn btn-success btn-block" ><i className="vi bi-support"></i>Need help, talk to us on Whatsapp</a></li>
+                <li><a href={config.whatsappHelpURI("Order " + window.location.href + " failed with error " + JSON.stringify(props.error))} className="btn btn-success btn-block" ><i className="vi bi-support"></i>Need help, talk to us on Whatsapp</a></li>
               </ul>
 
             </div>
@@ -57,7 +57,7 @@ function OrderSuccess(props) {
   }
 
     let { order } = props
-    let {token} = order
+  let tokens = order.tokens || [order.token]
     return (
           <main id="main">
 
@@ -69,7 +69,7 @@ function OrderSuccess(props) {
             <div className="about-content" data-aos="fade-left" data-aos-delay="100">
 
               <h2><span>Payment received</span> </h2>
-            <h4><span>Successfully bought {order.package_.name}</span> </h4>
+            <h4><span>Successfully bought {order.quantity > 1 ? order.quantity + " x" : "" } {order.package_.name}</span> </h4>
               <p>Thank you for using Boom263, find your order below.</p>
               <div className="block-pricing">
               <div className="pricing-table">
@@ -77,17 +77,22 @@ function OrderSuccess(props) {
                         <li>
                             <img src="/assets/img/cards.png" alt="card type" style={{width: "100%"}} />
                         </li>
-                </ul>
-                <h4>Recharge PIN</h4>
-                <h2><code>{token.pretty}</code></h2>
-                <div className="row">
-                    <div className="col-md-12">
-                        Click the button below to copy the recharge code to your clipboard.
-                    </div>
-                    <div className="col-md-12">
-                        <a href={"tel:" + token.ussd} onClick={clipboardCopy} className="btn btn-info btn-block">{token.ussd}</a>
-                    </div>
-                  </div>
+                      </ul>
+                      {tokens.length > 1 ? <h3>{tokens.length} x {order.package_.name} Recharge Pins</h3> : null}
+                      {tokens.map(token => {
+                        return <>
+                          <h4>Recharge PIN</h4>
+                          <h2><code>{token.pretty}</code></h2>
+                          <div className="row">
+                            <div className="col-md-12">
+                              Click the button below to copy the recharge code to your clipboard.
+                            </div>
+                            <div className="col-md-12">
+                              <a href={"tel:" + token.ussd} onClick={clipboardCopy} className="btn btn-info btn-block">{token.ussd}</a>
+                            </div>
+                          </div></>
+                      }
+                      )}
                 
                 <div className="table_btn">
                     <Link to={"/buy/"+order.package_.id} className="btn btn-default"><i className="bi bi-cart"></i> Buy this again</Link>
@@ -101,7 +106,7 @@ function OrderSuccess(props) {
                 <li><i className="vi bi-chevron-right"></i>Buyer account: <b>{order.purchaser.fullname}</b></li>
                 <li><i className="vi bi-chevron-right"></i>Amount Paid: <b><Money value={order.amount_paid} /></b></li>
                 <li><i className="vi bi-chevron-right"></i>Time Paid: <b>{order.paidAt ? order.paidAt["@ts"] : "recently"}</b></li>
-                    <li>Need help? <a href={config.whatsappURI} target="_blank" rel="noreferrer">Talk to our customer support on Whatsapp</a></li>
+                    <li>Need help? <a href={config.whatsappHelpURI("Complete order help")} target="_blank" rel="noreferrer">Talk to our customer support on Whatsapp</a></li>
               </ul>
 
             </div>
@@ -236,7 +241,7 @@ function OrderPendingInnbucks(props) {
                       <br /> Sometimes it takes a while for the payment to reflect, if you get an error after retrying at least 3 times, please contact support.
                       <br /> If you need any other help, please contact our customer support on Whatsapp.
                     </p></li>
-                <li><a href={config.whatsappURI} className="btn btn-success btn-block" ><i className="vi bi-support"></i>Need help, talk to us on Whatsapp</a></li>
+                <li><a href={config.whatsappHelpURI("Innbucks help")} className="btn btn-success btn-block" ><i className="vi bi-support"></i>Need help, talk to us on Whatsapp</a></li>
                 
               </ul>
 
@@ -351,12 +356,12 @@ function OrderPendingDeriv(props) {
               </ul>
               <div className="row">
                 <div className="col-md-12">
-                    <button onClick={verifyAndPay} disabled={disabled} className="btn btn-block btn-lg btn-danger">Verify and buy {order.package_.name} for <Money value={config.pkg_price('deriv', order.package_.amount )} /></button>    
+                    <button onClick={verifyAndPay} disabled={disabled} className="btn btn-block btn-lg btn-danger">Verify and buy {order.quantity} x {order.package_.name} for <Money value={order.amount} /></button>    
                 </div>  
               </div> 
               <ul className="list-unstyled"> 
-                <li><i className="vi bi-chevron-right"></i><b>You are paying <Money value={config.pkg_price('deriv', order.package_.amount)} /> </b></li>
-                <li><a href={config.whatsappURI} className="btn btn-success btn-block" ><i className="vi bi-support"></i>Need help, talk to us on Whatsapp</a></li>
+                <li><i className="vi bi-chevron-right"></i><b>You are paying <Money value={order.amount} /> </b></li>
+                <li><a href={config.whatsappHelpURI("Deriv pay help")} className="btn btn-success btn-block" ><i className="vi bi-support"></i>Need help, talk to us on Whatsapp</a></li>
               </ul>
 
             </div>
@@ -368,66 +373,6 @@ function OrderPendingDeriv(props) {
   </main>
     )))
 }
-
-class NewOrder extends Component{
-    constructor(props) {
-        super(props)
-
-      let pkg = props.package_
-      let order = config.getPackage(pkg)
-      if (pkg && !order) {
-        order = config.currentOrder(true)
-      }
-        
-        this.state = {
-          working: true, success: false, order, error: '',
-          paymentMethod: props.pmethod
-        }
-      
-    }
-
-    componentDidMount() {
-      let order = config.getPackage(this.props.package_)
-      if (config.currentOrder() === this.props.package_) {
-        alert('Cannot create new order', 'You already have an order for this package', 'warning')
-        this.setState({ working: false, success: true, redirect: '/packages' })
-      } else {
-        config.saveCurrentOrder(this.props.package_)
-      }
-      console.log(order)
-      window.pageview("Creating new order...")
-      if (order && order.id) {
-            order.features = null
-            config.createNewOrder(order, this.state.paymentMethod, 1).then(order => {
-              if (order && order.error) {
-                this.setState({ working: false, error: order.error })
-                alert('Failed to create new order', order.error, 'warning')
-                return
-              }
-              if (order.payment_method === 'innbucks') {
-                  config.saveInnbucksOrder(order)
-                }
-                config.saveCurrentOrder(order)
-                this.setState({order, working: false, success: true, redirect: "/order/"+order._id})
-            }).catch(err => {
-
-                this.setState({working: false, error: err, order})
-            })    
-        } else {
-        alert('Failed to create new order', 'Invalid package', 'warning')    
-        this.setState({ working: false, success: true, redirect: '/packages' })
-            
-        }
-    }
-
-    render() {
-      return (this.state.working ? <Loader text={"Creating order for " + this.props.package_ + " paying using " + this.state.paymentMethod  } /> : (this.state.success ?
-            <Navigate to={this.state.redirect} /> :
-            <OrderFailure reason={"Failed to create new order"} pmethod={this.state.paymentMethod} error={this.state.error} order={this.state.order} />))
-    }
-    
-}
-
 
 function Order(props) {
 
@@ -489,7 +434,7 @@ function Order(props) {
   
     
 
-    return props.params.id === "new" ? <NewOrder package_={props.params.package_} pmethod={props.params.pmethod} /> : (loading ? <Loader text="Loading your order" /> : page)
+    return (loading ? <Loader text="Loading your order" /> : page)
 }
 
 export default withRouter(Order)

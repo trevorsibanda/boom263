@@ -64,13 +64,25 @@ const moneyFormat = (value) =>
   }).format(value);
 
 
+const checkPhone = (phoneNumber) => {
+    var found = phoneNumber.search(/^(\+{1}\d{2,3}\s?[(]{1}\d{1,3}[)]{1}\s?\d+|\+\d{2,3}\s{1}\d+|\d+){1}[\s|-]?\d+([\s|-]?\d+){1,2}$/);
+    if(found > -1) {
+        return true;
+    }
+    else {
+        return false;
+    }
+}
+
 function localUser() {
     return reactLocalStorage.getObject('user', {
         fullname: 'Guest',
         email: 'anonymous@boom263.co.zw',
-        phone: '0000000000',
+        phone: '07',
     })
 }
+
+
 
 function fetchInnbucksOrders() {
     let t = reactLocalStorage.getObject('innbucks_orders', {orders: []})
@@ -167,8 +179,8 @@ function api_post(uri, data) {
     })
 }
 
-function createNewOrder(package_, payment_method, quantity = 1) {
-    return api_post("new_order", {package_, payment_method, quantity})
+function createNewOrder(package_, payment_method, quantity, phone) {
+    return api_post("new_order", {package_, payment_method, quantity, phone})
 }
 
 function derivLoginURL() {
@@ -244,10 +256,15 @@ function logout() {
     }
 }
 
+const whatsappHelpURI = (txt) => {
+    return whatsappURI + encodeURIComponent("\nOrder: " + window.location.href + "\n\n"+ txt)
+}
+
 const config = {
     packages,
     moneyFormat,
     whatsappURI,
+    whatsappHelpURI,
     supportEmail,
     derivTnc,
     admin: {
@@ -289,6 +306,7 @@ const config = {
     setPostLogin,
     postLogin,
     urlParams,
+    checkPhone,
 }
 
 export default config;

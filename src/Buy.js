@@ -17,12 +17,18 @@ function Buy(props) {
 
     })
     let [pmethod, setPmethod] = useState("deriv")
-    let [redirectToLogin, setRedirectToLogin] = useState(false)
-    let [redirectToOrder, setRedirectToOrder] = useState(false)
+    let [quantity, setQuantity] = useState(1)
+    let [phone, setPhone] = useState(config.localUser().phone)
+    let quantities = [1,2,3,4,5]
+    let [redirect, setRedirect] = useState(false)
+    let [error, setError] = useState(null)
     let [loading, setLoading] = useState(true)
     let [loadingMsg, setLoadingMsg] = useState("Loading package")
 
     let loadPkg = () => {
+        if (package_.amount !== 0) {
+            return
+        }
         let package__ = null
         config.packages.forEach(pkg => {
             if (pkg.id === props.params.package_) {
@@ -32,7 +38,7 @@ function Buy(props) {
         if (package__ === null) {
             alert('Load package', 'Failed to load package with id: ' + props.params.package_)
             setLoading(false)
-            setRedirectToOrder(true)
+            setRedirect("/packages")
             return
         }
         window.pageview("Buy "+ package__.name + " for " + config.moneyFormat(config.pkg_price(pmethod,package_.amount)))
@@ -45,35 +51,65 @@ function Buy(props) {
         setLoading(false)
     }
 
-    let onPayClick = () => {
-        if (pmethod === "deriv" && !config.checkLoggedIn()) {
-            alert("Login required", "Login to Deriv to pay using your Deriv balance.", "info")
-            setTimeout(() => {
-                setRedirectToLogin(true)
-            }, 2500)
+    let onPayClick = (evt) => {
+        if (!config.checkPhone(phone)) {
+            alert("Invalid phone number", "Please enter a valid phone number. This is used to keep track of your orders as well as important updates", "info")
             return
         }
         setLoading(true)
-        setLoadingMsg("Creating order for " + package_.name + "paying using " + pmethod)
         config.setPostLogin('/buy/' + package_.id)
-        config.saveCurrentOrder({
+        if (pmethod === "deriv" && !config.checkLoggedIn()) {
+            alert("Login required", "Login to Deriv to pay using your Deriv balance.", "info")
+            setTimeout(() => {
+                setLoading(false)
+                setRedirect("/login")
+            }, 2500)
+            return
+        }
+        
+        setLoading(true)
+        setLoadingMsg("Creating order for " + package_.name + "paying using " + pmethod)
+        evt.preventDefault()   
+        newOrder()
+    }
+
+    let newOrder = () => {
+      config.saveCurrentOrder({
             package_, status: 'not_created', 
             payment_method: pmethod,
-        }).then((order_) => {
-            if (order_.error) {
-                window.alert("Failed to create order", order_.error, "error")
-                setLoading(false)
-                return
-            }
-            setLoading(false)
-            setRedirectToOrder(true)
-        }).catch((err) => {
-            window.alert("Failed to create order", err.message, "error")
-            setLoading(false)
+            quantity
         })
-        
-        
-        
+        window.pageview("Creating new order...")
+        setLoading(true)
+        setLoadingMsg("Creating new order for " + quantity + "x " + package_.id + " using " + pmethod)  
+      if (package_ && package_.id) {
+          package_.features = null
+          let user = config.localUser()
+          user.phone = phone
+          config.setLocalUser(user)
+          return config.createNewOrder(package_, pmethod, quantity, phone).then(order => {
+              if (order && order.error) {
+                  setLoading(false)
+                  setError(order.error)
+                  alert('Failed to create new order', order.error, 'warning')
+                  return
+              }
+              if (order.payment_method === 'innbucks') {
+                  config.saveInnbucksOrder(order)
+              }
+              config.saveCurrentOrder(order)
+              setLoading(false)
+              setRedirect("/order/" + order._id)
+          }).catch(err => {
+              setError(err)
+              setLoading(false)
+              alert('Failed to create new order', err.error || "An unhandled error occured", 'warning')
+          })    
+        } else {
+          alert('Failed to create new order', 'Invalid package', 'warning')
+          setRedirect("/packages")
+          setLoading(false)   
+        }
     }
     
 
@@ -123,12 +159,27 @@ function Buy(props) {
                                         : null}
                                 </li>
                                 
-                                <li>Pay <Money value={config.pkg_price(pmethod,package_.amount)} /> only</li>
+                                <li>
+                                    <label>Quantity</label>
+                                    <select value={quantity} onChange={evt => setQuantity(evt.target.value)} className="form-control" id="payment_method">
+                                        {quantities.map(q => {
+                                            return <option value={q} >{q}     for   {config.moneyFormat(config.pkg_price(pmethod,package_.amount) * q)}</option>
+                                    })    
+                                    }
+                                    </select>
+                                </li>
+                                <li>
+                                    <label>* Your Phone Number</label>
+                                    <input type="text" required value={phone} onChange={evt => setPhone(evt.target.value)} placeholder="Required. Your phone number" className="form-control" />
+                                </li>
 
                             </ul>
                             <div className="table_btn">
-                                
-                                <button onClick={onPayClick} disabled={loading} className="btn btn-success"><i className="bi bi-cart"></i>Order {package_.name} for <Money value={config.pkg_price(pmethod,package_.amount)} /></button>
+                                {error ? <div class="alert alert-danger">
+                                    <h4>Error</h4>
+                                    <p>{ error.error || "Server error" }</p>
+                                </div> : null}
+                                <button onClick={onPayClick} disabled={loading} className="btn btn-success"><i className="bi bi-cart"></i>Order {package_.name} for <Money value={config.pkg_price(pmethod,package_.amount) * quantity} /></button>
                                 
                             </div>
                         </div>
@@ -139,16 +190,15 @@ function Buy(props) {
         </section>
     )
 
-    if (redirectToOrder) {
-        component = < Navigate to={'/order/new/' + package_.id + "/" + pmethod} />
+    if (redirect) {
+        window.event("Redirect", "Page", redirect)
+        component = <Navigate to={redirect} />
+    }
+    if (loading) {
+        component = <Loader text={loadingMsg} />
     }
 
-    if (redirectToLogin) {
-        window.event("Redirect", "Login", "Buy")
-        component = <Navigate to="/login" />
-    }
-
-    return  loading ? <Loader text={loadingMsg} /> : component
+    return  component
 
 }
 
