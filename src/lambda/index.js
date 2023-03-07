@@ -16,8 +16,10 @@ router.get('/', (req, res) => {
 
 router.post('/new_order', (req, res) => {
   let body = req.body
+  let quantity = parseInt(body.quantity)
+  body.quantity = quantity
   //check if stock exists first
-  return core.checkStockExists(body.package_.id, body.quantity).then(count => {
+  return core.checkStockExists(body.package_.id, quantity).then(count => {
     if (count === 0) {
       core.slack_user_msg(req.user, core.salesChannel, "Failed to create order for " + body.package_.name + " because we are out of stock")
       res.jsonp({
@@ -25,8 +27,8 @@ router.post('/new_order', (req, res) => {
       })
       return
     }
-    if (count <= body.quantity) {
-      core.slack_user_msg(req.user, core.salesChannel, "Failed to create order for " + body.package_.name + " because not enough stock" + body.quantity)
+    if (count <= quantity) {
+      core.slack_user_msg(req.user, core.salesChannel, "Failed to create order for " + body.package_.name + " because not enough stock" + quantity)
       res.jsonp({
         error: 'Sorry, we only have ' + count + " stock left for " + body.package_.name
       })
@@ -198,6 +200,7 @@ router.post('/verify_order', (req, res) => {
             
             //get one stock item from list
             return core.popStock(order.package_.id, order.quantity).then(stock => {
+              console.log(stock)
               if (stock.length !== order.quantity) {
                 core.slack_activity("WARNING: User received less stock than he/she paid for " + JSON.stringify(order) + "\n" + JSON.stringify(stock))
               }
@@ -213,17 +216,30 @@ router.post('/verify_order', (req, res) => {
                 core.slack_msg(core.salesChannel, "SETOrderPaid ::: Failed to update order after paid " + order._id + " with error: " + err)
                 core.slack_msg(core.salesChannel, "CRITICAL: Contact buyer and find way to resolve issue " + JSON.stringify(stock) + "\n" + JSON.stringify(order))
                 res.jsonp({
-                  error: 'Your order failed at the end, but your recharge pin is ' + stock.data.code,
-                  reason: stock.data
+                  error: 'Your order failed at the end, but your recharge pin is ' + stock[0].data.code,
+                  reason: stock
                 })
               })
             }).catch(err => {
-              
+              console.log(err)
               core.slack_msg(core.salesChannel, "Failed to pop stock from list for order " + order._id + " with error: " + err)
               core.slack_msg(core.salesChannel, "CRITICAL: Contact buyer and find way to resolve issue as payment went through " + JSON.stringify(order))
-              res.jsonp({
-                error: 'Payment received but out of stock, contact support',
-                reason: 'Out of stock. Contact support'
+              
+              core.setOrderPaid(order, [], order.amount).then(doc => {
+                res.jsonp({
+                order: doc.data,
+                error: 'Payment received but failed to pull stock from inventory, contact support',
+                reason: 'Failed to access stock. Contact support'
+                })
+                return
+              }).catch(err => {
+                console.log("Fatal error, failed to update order after paid " + order._id)
+                
+                core.slack_msg(core.salesChannel, "SETOrderPaid ::: Failed to update order after paid " + order._id + " with error: " + err)
+                res.jsonp({
+                  error: 'Your order failed at the end, your payment was received. Please contact support to get your recharge token' ,
+                  reason: []
+                })
               })
             })
           }).catch(err => {

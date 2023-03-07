@@ -251,7 +251,7 @@ async function send_order_email(order, stock) {
 
 async function slack_msg(channel, text) {
   return await slackClient.chat.postMessage({
-    channel: channel,
+    channel: channel || activityChannel,
     text: text
   }).catch(console.log).then(console.log)
 }
@@ -317,13 +317,14 @@ function checkStockExists(package_) {
 }
 
 function popStock(package_, quantity) {
-  let query = f.Map(f.Take(quantity, f.Select(["data"], f.Paginate(f.Match(stockStatusIndex, package_, "free")))), f.Lambda("x", f.Select("data", f.Update(f.Var("x"), {data: {"status": "used"}}))))
+  
+  let query = f.Map(f.Take(parseInt(quantity), f.Select(["data"], f.Paginate(f.Match(stockStatusIndex, package_, "free")))), f.Lambda("x", f.Select("data", f.Update(f.Var("x"), {data: {"status": "used"}}))))
   return dbClient.query(query)
 }
 
 function setOrderPaid(order, stock, amount) {
   let ttl = f.TimeAdd(f.Now(), 365 * 2, "days") //non fulfilled orders expire after 2 years
-  let query = f.Update(f.Ref(ordersCollection, order._id), {ttl,  data: {"status": "paid", "paidAt": f.Now(), "amount_paid": amount, "tokens": stock, "stock_id": stock.ref}})
+  let query = f.Update(f.Ref(ordersCollection, order._id), {ttl,  data: {"status": "paid", "paidAt": f.Now(), "amount_paid": amount, "tokens": stock}})
   return dbClient.query(query)
 }
 

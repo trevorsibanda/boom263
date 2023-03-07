@@ -78,7 +78,7 @@ function OrderSuccess(props) {
                             <img src="/assets/img/cards.png" alt="card type" style={{width: "100%"}} />
                         </li>
                       </ul>
-                      {tokens.length > 1 ? <h3>{tokens.length} x {order.package_.name} Recharge Pins</h3> : null}
+                      {tokens.length > 1 ? <p><h3>{tokens.length} x {order.package_.name} Recharge Pins</h3></p> : null}
                       {tokens.map(token => {
                         return <>
                           <h4>Recharge PIN</h4>
@@ -220,8 +220,6 @@ function OrderPendingInnbucks(props) {
                         <h2><code>{order.innbucks.receiver_name}</code></h2>
                         <h4>*EXACT Amount to send</h4>
                         <h2><code><Money value={order.amount} /></code></h2>
-                        
-
                </div></div>         
               <ul className="list-unstyled">
                 <li><i className="vi bi-chevron-right"></i><b>Enter InnBucks Reference code below.</b></li>
@@ -391,6 +389,11 @@ function Order(props) {
             if (order_ && order_.error) {
               alert('Error', 'Failed to load order with error: '+ JSON.stringify(order_.error), 'warning')
               setError(order_.error)
+              setOrder({
+                _id,
+                amount: 'Unknown',
+                status: 'cancelled'
+              })
 
               setLoading(false)
               return
@@ -423,7 +426,7 @@ function Order(props) {
           page = <OrderFailure order={order} error={{error: "Unsupported payment method "}} />
         }
       } else if (order.status === 'cancelled') {
-            window.pageview("Cancelled order "+ order.package_.name + "#" + order._id +" using " + order.payment_method)
+            window.pageview("Problem with your order ")
             page = <OrderFailure order={order} error={error} />
       } else if (order.status === 'paid') {
             window.pageview("Completed Order: "+ order.package_.name + "#" + order._id +" using " + order.payment_method)
