@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import ReactGA from 'react-ga';
+import ReactGA from 'react-ga4';
 import './index.css';
 import App from './App';
 
@@ -21,7 +21,7 @@ ReactGA.initialize('G-C160G1BYQP');
 
 window.pageview = (title) => {
   document.title = title + " - Boom263"
-  ReactGA.pageview(window.location.href)
+  ReactGA.send({ hitType: "pageview", page: window.location.href, title});
 }
 
 window.event = (category, action, label) => {
